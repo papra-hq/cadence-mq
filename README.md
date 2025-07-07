@@ -7,7 +7,7 @@
 </p>
 
 <h1 align="center">
-  Cadence MQ - Job scheduling library for Node.js
+  Cadence MQ - Job scheduling library
 </h1>
 <p align="center">
   Cadence MQ is a job scheduling library for Node.js. It is designed to be easy to use, flexible, and scalable.
