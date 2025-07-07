@@ -1,0 +1,5 @@
+{
+  "name": "@cadence-mq/root",
+  "license": "MIT",
+  "packageManager": "pnpm@10.10.0"
+}

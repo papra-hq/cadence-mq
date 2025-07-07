@@ -1,0 +1,57 @@
+{
+  "name": "@cadence-mq/driver-libsql",
+  "type": "module",
+  "version": "1.0.0",
+  "packageManager": "pnpm@10.10.0",
+  "description": "LibSQL driver for Cadence MQ",
+  "author": "Corentin Thomasset <corentinth@proton.me> (https://corentin.tech)",
+  "license": "MIT",
+  "homepage": "https://github.com/papra-hq/cadence-mq/tree/main/packages/driver-libsql",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/papra-hq/cadence-mq",
+    "directory": "packages/driver-libsql"
+  },
+  "bugs": {
+    "url": "https://github.com/papra-hq/cadence-mq/issues"
+  },
+  "keywords": [
+    "cadence",
+    "cadence-mq",
+    "libsql",
+    "sqlite",
+    "job-scheduler",
+    "job-queue",
+    "task-queue",
+    "tasks",
+    "jobs"
+  ],
+  "exports": {
+    ".": "./dist/index.js",
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsdown",
+    "build:watch": "tsdown --watch",
+    "dev": "pnpm build:watch",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "test": "vitest run",
+    "test:watch": "vitest watch",
+    "prepublishOnly": "pnpm build"
+  },
+  "peerDependencies": {
+    "@cadence-mq/core": "workspace:^",
+    "@libsql/client": "^0.15.9"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "^4.16.2",
+    "eslint": "^9.30.1",
+    "tsdown": "^0.12.9",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  }
+}

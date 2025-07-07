@@ -1,0 +1,27 @@
+{
+  "name": "@cadence-mq/demo-local-sqlite",
+  "type": "module",
+  "version": "1.0.0",
+  "packageManager": "pnpm@10.10.0",
+  "description": "",
+  "author": "",
+  "license": "MIT",
+  "keywords": [],
+  "main": "index.ts",
+  "scripts": {
+    "start:local-sqlite": "tsx local-sqlite/index.ts",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
+  "dependencies": {
+    "@cadence-mq/core": "workspace:*",
+    "@cadence-mq/driver-libsql": "workspace:*",
+    "@libsql/client": "^0.15.9"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "catalog:",
+    "eslint": "catalog:",
+    "tsx": "^4.20.3",
+    "typescript": "catalog:"
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "name": "@cadence-mq/core",
+  "type": "module",
+  "version": "0.0.0",
+  "packageManager": "pnpm@10.10.0",
+  "description": "Modern, type-safe, and performant task queue for Node.js",
+  "author": "Corentin Thomasset <corentinth@proton.me> (https://corentin.tech)",
+  "license": "MIT",
+  "keywords": [
+    "cadence",
+    "cadence-mq",
+    "job-scheduler",
+    "job-queue",
+    "task-queue",
+    "tasks",
+    "jobs"
+  ],
+  "homepage": "https://github.com/papra-hq/cadence-mq/tree/main/packages/core",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/papra-hq/cadence-mq",
+    "directory": "packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/papra-hq/cadence-mq/issues"
+  },
+  "exports": {
+    ".": "./dist/index.js",
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsdown",
+    "build:watch": "tsdown --watch",
+    "dev": "pnpm build:watch",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "test": "vitest run",
+    "test:watch": "vitest watch"
+  },
+  "dependencies": {
+    "@corentinth/chisels": "^1.3.1",
+    "nanoid": "^5.1.5"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
+    "eslint": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}
