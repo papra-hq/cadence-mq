@@ -35,6 +35,8 @@
 There are many job scheduling libraries of quality, but most of them are tied to a specific backend, like BullMQ with Redis or Agenda with MongoDB.
 Cadence MQ is designed to be **backend agnostic**, and can be used with different backends, the motivation is to provide a simple simple for self-hostable applications but being able to scale horizontally in production environments.
 
+This as been initially created for [Papra](https://papra.app), a self-hostable minimalistic document management platform, as we didn't want the self-hosters to have to setup a Redis.
+
 ## Getting started
 
 Basic example using LibSQL/SQLite as backend:
