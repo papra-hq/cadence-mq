@@ -6,15 +6,6 @@
   "description": "Modern, type-safe, and performant task queue for Node.js",
   "author": "Corentin Thomasset <corentinth@proton.me> (https://corentin.tech)",
   "license": "MIT",
-  "keywords": [
-    "cadence",
-    "cadence-mq",
-    "job-scheduler",
-    "job-queue",
-    "task-queue",
-    "tasks",
-    "jobs"
-  ],
   "homepage": "https://github.com/papra-hq/cadence-mq/tree/main/packages/core",
   "repository": {
     "type": "git",
@@ -24,6 +15,15 @@
   "bugs": {
     "url": "https://github.com/papra-hq/cadence-mq/issues"
   },
+  "keywords": [
+    "cadence",
+    "cadence-mq",
+    "job-scheduler",
+    "job-queue",
+    "task-queue",
+    "tasks",
+    "jobs"
+  ],
   "exports": {
     ".": "./dist/index.js",
     "./package.json": "./package.json"
