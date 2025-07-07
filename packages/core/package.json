@@ -1,7 +1,7 @@
 {
   "name": "@cadence-mq/core",
   "type": "module",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "packageManager": "pnpm@10.10.0",
   "description": "Modern, type-safe, and performant task queue for Node.js",
   "author": "Corentin Thomasset <corentinth@proton.me> (https://corentin.tech)",
