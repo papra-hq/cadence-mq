@@ -11,23 +11,23 @@ describe('task-definition registry', () => {
         handler: async () => {},
       };
 
-      registry.add(taskDefinition);
+      registry.saveTaskDefinition({ taskDefinition });
 
-      expect(registry.get('test-task')).to.eql(taskDefinition);
+      expect(registry.getTaskDefinitionOrThrow({ taskName: 'test-task' })).to.eql({ taskDefinition });
     });
 
     test('when a retrieving a task definition that does not exist, an error is raised', () => {
       const registry = createTaskDefinitionRegistry();
 
-      expect(() => registry.get('test')).toThrowError('Task definition not found: test');
+      expect(() => registry.getTaskDefinitionOrThrow({ taskName: 'test' })).toThrowError('Task definition not found: test');
     });
 
     test('a task with the same name cannot be registered twice', () => {
       const registry = createTaskDefinitionRegistry();
 
-      registry.add({ name: 'test-task', handler: async () => {} });
+      registry.saveTaskDefinition({ taskDefinition: { name: 'test-task', handler: async () => {} } });
 
-      expect(() => registry.add({ name: 'test-task', handler: async () => {} })).toThrowError('Task definition already exists: test-task');
+      expect(() => registry.saveTaskDefinition({ taskDefinition: { name: 'test-task', handler: async () => {} } })).toThrowError('Task definition already exists: test-task');
     });
   });
 });

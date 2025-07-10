@@ -26,7 +26,7 @@
 - [ ] Unique key for jobs
 - [ ] Drivers for different backends
   - [x] SQLite/LibSQL (in-memory, remote server or file-based)
-  - [ ] Native in-memory
+  - [x] Native in-memory
   - [ ] Redis
   - [ ] MongoDB
 

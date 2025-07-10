@@ -31,5 +31,5 @@ jobs:
       - name: Build all packages
         run: pnpm -r --parallel build
 
-      - name: Run tests in all packages
-        run: pnpm -r --parallel test
+      - name: Run tests from vitest projects
+        run: pnpm test

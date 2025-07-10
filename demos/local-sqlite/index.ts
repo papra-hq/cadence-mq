@@ -2,10 +2,9 @@ import { createQueue } from '@cadence-mq/core';
 import { createLibSqlDriver, setupSchema } from '@cadence-mq/driver-libsql';
 import { createClient } from '@libsql/client';
 
-const client = createClient({ url: 'file:./cadence-mq.db' });
+const client = createClient({ url: ':memory:' });
 // Run migrations to create the database schema
 await setupSchema({ client });
-
 const queue = createQueue({ driver: createLibSqlDriver({ client }) });
 
 queue.registerTask({
@@ -17,9 +16,7 @@ queue.registerTask({
 
 queue.startWorker({ workerId: '1' });
 
-setInterval(async () => {
-  await queue.scheduleJob({
-    taskName: 'send-welcome-email',
-    data: { email: 'test@test.com' },
-  });
-}, 50);
+await queue.scheduleJob({
+  taskName: 'send-welcome-email',
+  data: { email: 'test@test.com' },
+});

@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS jobs (
   started_at DATETIME,
   completed_at DATETIME,
   max_retries INTEGER,
+  error TEXT,
   data TEXT,
   result TEXT,
   schedule_at DATETIME NOT NULL

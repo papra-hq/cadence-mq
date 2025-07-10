@@ -1,0 +1,48 @@
+{
+  "name": "@cadence-mq/test-suites",
+  "type": "module",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@10.10.0",
+  "description": "A collection of test suites for testing Cadence MQ drivers.",
+  "author": "Corentin Thomasset <corentinth@proton.me> (https://corentin.tech)",
+  "license": "MIT",
+  "homepage": "https://github.com/papra-hq/cadence-mq/tree/main/packages/test-suites",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/papra-hq/cadence-mq",
+    "directory": "packages/driver-memory"
+  },
+  "bugs": {
+    "url": "https://github.com/papra-hq/cadence-mq/issues"
+  },
+  "keywords": [
+    "cadence",
+    "cadence-mq",
+    "memory",
+    "job-scheduler",
+    "job-queue",
+    "task-queue",
+    "tasks",
+    "jobs"
+  ],
+  "exports": {
+    ".": "./tests/index.ts"
+  },
+  "main": "./tests/index.ts",
+  "module": "./tests/index.ts",
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
+  "peerDependencies": {
+    "@cadence-mq/core": "workspace:^"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "catalog:",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

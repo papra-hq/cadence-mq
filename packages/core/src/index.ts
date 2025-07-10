@@ -1,3 +1,9 @@
+export {
+  createError,
+  createErrorFactory,
+  isCadenceError,
+} from './errors/errors';
+
 export type {
   Job,
   JobData,
@@ -7,4 +13,5 @@ export type {
 
 export {
   createQueue,
+  type Queue,
 } from './queue';

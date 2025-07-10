@@ -3,10 +3,14 @@
   "license": "MIT",
   "packageManager": "pnpm@10.10.0",
   "scripts": {
-    "changeset": "changeset"
+    "changeset": "changeset",
+    "test": "vitest run",
+    "test:watch": "vitest --watch"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.1",
-    "@changesets/cli": "^2.29.5"
+    "@changesets/cli": "^2.29.5",
+    "vitest": "catalog:",
+    "@vitest/coverage-v8": "catalog:"
   }
 }

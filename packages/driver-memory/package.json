@@ -1,16 +1,16 @@
 {
-  "name": "@cadence-mq/driver-libsql",
+  "name": "@cadence-mq/driver-memory",
   "type": "module",
-  "version": "0.0.2",
+  "version": "0.0.0",
   "packageManager": "pnpm@10.10.0",
-  "description": "LibSQL driver for Cadence MQ",
+  "description": "Memory driver for Cadence MQ",
   "author": "Corentin Thomasset <corentinth@proton.me> (https://corentin.tech)",
   "license": "MIT",
-  "homepage": "https://github.com/papra-hq/cadence-mq/tree/main/packages/driver-libsql",
+  "homepage": "https://github.com/papra-hq/cadence-mq/tree/main/packages/driver-memory",
   "repository": {
     "type": "git",
     "url": "https://github.com/papra-hq/cadence-mq",
-    "directory": "packages/driver-libsql"
+    "directory": "packages/driver-memory"
   },
   "bugs": {
     "url": "https://github.com/papra-hq/cadence-mq/issues"
@@ -18,8 +18,7 @@
   "keywords": [
     "cadence",
     "cadence-mq",
-    "libsql",
-    "sqlite",
+    "memory",
     "job-scheduler",
     "job-queue",
     "task-queue",
@@ -44,8 +43,7 @@
     "prepublishOnly": "pnpm build"
   },
   "peerDependencies": {
-    "@cadence-mq/core": "workspace:^",
-    "@libsql/client": "^0.15.9"
+    "@cadence-mq/core": "workspace:^"
   },
   "devDependencies": {
     "@antfu/eslint-config": "catalog:",

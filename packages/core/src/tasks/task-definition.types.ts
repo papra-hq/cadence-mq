@@ -1,6 +1,6 @@
 import type { TaskDefinition } from './tasks.types';
 
 export type TaskDefinitionRegistry = {
-  add: (taskDefinition: TaskDefinition) => void;
-  get: (name: string) => TaskDefinition;
+  saveTaskDefinition: ({ taskDefinition }: { taskDefinition: TaskDefinition }) => void;
+  getTaskDefinitionOrThrow: ({ taskName }: { taskName: string }) => { taskDefinition: TaskDefinition };
 };

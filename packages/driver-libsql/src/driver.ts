@@ -1,36 +1,33 @@
 import type { Job, JobRepositoryDriver, JobStatus } from '@cadence-mq/core';
 import type { Client, Row } from '@libsql/client';
+import { DEFAULT_POLL_INTERVAL_MS } from './driver.constants';
 
-async function getAndMarkJobAsProcessing({ client, processingTimeoutMs, now = new Date() }: { client: Client; processingTimeoutMs: number; now?: Date }) {
-  const transaction = await client.transaction('write');
+async function getAndMarkJobAsProcessing({ client, now = new Date() }: { client: Client; now?: Date }) {
+  // Use a single UPDATE statement to atomically select and update a job
+  // This prevents long-running transactions that can lock the database
+  const { rows } = await client.execute({
+    sql: `
+      UPDATE jobs 
+      SET status = 'processing', started_at = ? 
+      WHERE id = (
+        SELECT id 
+        FROM jobs 
+        WHERE status = 'pending' 
+        ORDER BY schedule_at ASC 
+        LIMIT 1
+      ) AND status = 'pending'
+      RETURNING *
+    `,
+    args: [now],
+  });
 
-  try {
-    const expiredAt = new Date(now.getTime() - processingTimeoutMs);
+  const [jobRow] = rows;
 
-    const { rows } = await transaction.execute({
-      sql: 'SELECT * FROM jobs WHERE status = \'pending\' OR (status = \'processing\' AND started_at < ?) ORDER BY schedule_at ASC LIMIT 1',
-      args: [expiredAt],
-    });
-
-    const [jobRow] = rows;
-
-    if (!jobRow) {
-      await transaction.rollback();
-      return { job: null };
-    }
-
-    await transaction.execute({
-      sql: 'UPDATE jobs SET status = \'processing\', started_at = ? WHERE id = ? AND status = \'pending\'',
-      args: [now, jobRow.id],
-    });
-
-    await transaction.commit();
-
-    return { job: toJob(jobRow) };
-  } catch (error) {
-    await transaction.rollback();
-    throw error;
+  if (!jobRow) {
+    return { job: null };
   }
+
+  return { job: toJob(jobRow) };
 }
 
 function toJob(row: Row): Job {
@@ -38,20 +35,21 @@ function toJob(row: Row): Job {
     id: String(row.id),
     taskName: String(row.task_name),
     status: row.status as JobStatus,
-    startedAt: row.started_at ? new Date(String(row.started_at)) : undefined,
-    completedAt: row.completed_at ? new Date(String(row.completed_at)) : undefined,
-    maxRetries: Number(row.max_retries),
+    startedAt: row.started_at ? new Date(row.started_at as unknown as string) : undefined,
+    completedAt: row.completed_at ? new Date(row.completed_at as unknown as string) : undefined,
+    maxRetries: row.max_retries ? Number(row.max_retries) : undefined,
     data: row.data ? JSON.parse(String(row.data)) : undefined,
     result: row.result ? JSON.parse(String(row.result)) : undefined,
-    scheduleAt: new Date(String(row.schedule_at)),
+    error: row.error ? String(row.error) : undefined,
+    scheduleAt: new Date(row.schedule_at as unknown as string),
   };
 }
 
-export function createLibSqlDriver({ client, pollIntervalMs = 1000 }: { client: Client; pollIntervalMs?: number }): JobRepositoryDriver {
+export function createLibSqlDriver({ client, pollIntervalMs = DEFAULT_POLL_INTERVAL_MS }: { client: Client; pollIntervalMs?: number }): JobRepositoryDriver {
   return {
-    fetchNextJob: async ({ processingTimeoutMs }) => {
+    fetchNextJob: async () => {
       while (true) {
-        const { job } = await getAndMarkJobAsProcessing({ client, processingTimeoutMs });
+        const { job } = await getAndMarkJobAsProcessing({ client });
 
         if (!job) {
           await new Promise(resolve => setTimeout(resolve, pollIntervalMs));
@@ -61,23 +59,33 @@ export function createLibSqlDriver({ client, pollIntervalMs = 1000 }: { client: 
         return { job };
       }
     },
-    saveJob: async ({ job, now = new Date() }) => {
+    saveJob: async ({ job, getNow = () => new Date() }) => {
       await client.batch([{
         sql: 'INSERT INTO jobs (id, task_name, status, created_at, max_retries, data, schedule_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        args: [job.id, job.taskName, job.status, now, job.maxRetries ?? null, JSON.stringify(job.data), job.scheduleAt],
+        args: [job.id, job.taskName, job.status, getNow(), job.maxRetries ?? null, JSON.stringify(job.data), job.scheduleAt],
       }], 'write');
     },
-    markJobAsCompleted: async ({ jobId, now = new Date(), result }) => {
+    markJobAsCompleted: async ({ jobId, getNow = () => new Date(), result }) => {
       await client.batch([{
         sql: 'UPDATE jobs SET status = \'completed\', completed_at = ?, result = ? WHERE id = ?',
-        args: [now, result ? JSON.stringify(result) : null, jobId],
-      }], 'write');
+        args: [getNow(), result ? JSON.stringify(result) : null, jobId],
+      }]);
     },
     markJobAsFailed: async ({ jobId, error }) => {
       await client.batch([{
         sql: 'UPDATE jobs SET status = ?, error = ? WHERE id = ?',
         args: ['failed', error, jobId],
-      }], 'write');
+      }]);
+    },
+    getJob: async ({ jobId }) => {
+      const { rows } = await client.execute({
+        sql: 'SELECT * FROM jobs WHERE id = ?',
+        args: [jobId],
+      });
+
+      const [jobRow] = rows;
+
+      return { job: jobRow ? toJob(jobRow) : null };
     },
   };
 }
