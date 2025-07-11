@@ -1,18 +1,25 @@
-import type { TaskDefinitionRegistry } from './task-definition.types';
+import type { StandardSchemaV1 } from '@standard-schema/spec';
 import type { TaskDefinition } from './tasks.types';
 
-export function createTaskDefinitionRegistry(): TaskDefinitionRegistry {
+export type TaskDefinitionRegistry = ReturnType<typeof createTaskRegistry>;
+
+export function createTaskRegistry() {
   const taskDefinitions = new Map<string, TaskDefinition>();
 
   return {
-    saveTaskDefinition: ({ taskDefinition }: { taskDefinition: TaskDefinition }) => {
-      if (taskDefinitions.has(taskDefinition.name)) {
-        throw new Error(`Task definition already exists: ${taskDefinition.name}`);
+    registerTask: <T extends StandardSchemaV1>(taskDefinition: TaskDefinition<T>) => {
+      if (taskDefinitions.has(taskDefinition.taskName)) {
+        throw new Error(`Task definition already exists: ${taskDefinition.taskName}`);
       }
 
-      taskDefinitions.set(taskDefinition.name, taskDefinition);
+      taskDefinitions.set(taskDefinition.taskName, taskDefinition as unknown as TaskDefinition);
     },
-    getTaskDefinitionOrThrow: ({ taskName }: { taskName: string }) => {
+    getTask: ({ taskName }: { taskName: string }) => {
+      const taskDefinition = taskDefinitions.get(taskName);
+
+      return { taskDefinition };
+    },
+    getTaskOrThrow: ({ taskName }: { taskName: string }) => {
       const taskDefinition = taskDefinitions.get(taskName);
 
       if (!taskDefinition) {

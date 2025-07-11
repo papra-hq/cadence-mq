@@ -8,5 +8,5 @@ export async function processJob({ job, taskDefinition, taskExecutionContext }: 
   return await retry(
     () => taskDefinition.handler({ data: job.data, context: taskExecutionContext }),
     { maxRetries },
-  );
+  ).then(result => result ?? undefined);
 }

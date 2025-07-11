@@ -12,13 +12,13 @@ async function getAndMarkJobAsProcessing({ client, now = new Date() }: { client:
       WHERE id = (
         SELECT id 
         FROM jobs 
-        WHERE status = 'pending' 
+        WHERE status = 'pending' AND schedule_at <= ?
         ORDER BY schedule_at ASC 
         LIMIT 1
       ) AND status = 'pending'
       RETURNING *
     `,
-    args: [now],
+    args: [now, now],
   });
 
   const [jobRow] = rows;
@@ -47,7 +47,7 @@ function toJob(row: Row): Job {
 
 export function createLibSqlDriver({ client, pollIntervalMs = DEFAULT_POLL_INTERVAL_MS }: { client: Client; pollIntervalMs?: number }): JobRepositoryDriver {
   return {
-    fetchNextJob: async () => {
+    getNextJobAndMarkAsProcessing: async () => {
       while (true) {
         const { job } = await getAndMarkJobAsProcessing({ client });
 

@@ -5,10 +5,14 @@ describe('core', () => {
   test('the exports are fixed', () => {
     expect(Object.keys(exported)).toMatchInlineSnapshot(`
       [
+        "createCadence",
         "createError",
         "createErrorFactory",
         "isCadenceError",
-        "createQueue",
+        "createScheduler",
+        "scheduleJob",
+        "createTaskRegistry",
+        "createWorker",
       ]
     `);
   });

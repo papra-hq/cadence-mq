@@ -15,7 +15,9 @@
   "dependencies": {
     "@cadence-mq/core": "workspace:*",
     "@cadence-mq/driver-libsql": "workspace:*",
-    "@libsql/client": "^0.15.9"
+    "@libsql/client": "^0.15.9",
+    "valibot": "^1.1.0",
+    "zod": "^4.0.5"
   },
   "devDependencies": {
     "@antfu/eslint-config": "catalog:",

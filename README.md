@@ -57,26 +57,31 @@ yarn add @cadence-mq/core @cadence-mq/driver-libsql
 
 
 ```ts
-import { createQueue } from '@cadence-mq/core';
-import { createLibSqlDriver, runMigrations } from '@cadence-mq/driver-libsql';
+import { createCadence } from '@cadence-mq/core';
+import { createLibSqlDriver } from '@cadence-mq/driver-libsql';
 import { createClient } from '@libsql/client';
+import { z } from 'zod';
 
-const client = createClient({ url: 'file:./cadence-mq.db' });
-const queue = createQueue({ driver: createLibSqlDriver({ client }) });
+const driver = createLibSqlDriver({ client: createClient({ url: ':memory:' }) });
 
-queue.registerTask({
-  name: 'send-welcome-email',
+const cadence = createCadence({ driver });
+
+cadence.registerTask({
+  taskName: 'send-welcome-email',
   handler: async ({ data }) => {
     console.log('Sending welcome email to', (data as { email: string }).email);
   },
 });
 
-queue.startWorker({ workerId: '1' });
+const worker = cadence.createWorker({ workerId: '1' });
 
-await queue.scheduleJob({
+worker.start();
+
+cadence.scheduleJob({
   taskName: 'send-welcome-email',
   data: { email: 'test@test.com' },
 });
+
 ```
 
 ## Examples

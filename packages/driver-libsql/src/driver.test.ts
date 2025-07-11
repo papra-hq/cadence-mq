@@ -1,7 +1,6 @@
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { createQueue } from '@cadence-mq/core';
 import { runTestSuites } from '@cadence-mq/test-suites';
 import { createClient } from '@libsql/client';
 import { afterAll, beforeAll, describe } from 'vitest';
@@ -22,7 +21,7 @@ describe('libsql driver', () => {
     });
 
     runTestSuites({
-      createQueue: async (args = {}) => {
+      createDriver: async () => {
         const dbDir = await fs.mkdtemp(path.join(TEST_DB_ROOT, 'cadence-mq-'));
         const dbPath = path.join(dbDir, 'cadence-mq.db');
 
@@ -32,9 +31,8 @@ describe('libsql driver', () => {
         await setupSchema({ client });
 
         const driver = createLibSqlDriver({ client, pollIntervalMs: POLL_INTERVAL_MS });
-        const queue = createQueue({ driver, ...args });
 
-        return { queue };
+        return { driver };
       },
       processingLatencyMs: POLL_INTERVAL_MS,
     });

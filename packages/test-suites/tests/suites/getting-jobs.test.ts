@@ -1,22 +1,24 @@
 import type { TestSuite } from '../types';
+import { createCadence } from '@cadence-mq/core';
 import { describe, expect, test } from 'vitest';
 import { waitNextEventLoop } from '../utils';
 
-export const testGettingJobs: TestSuite = ({ createQueue }) => {
+export const testGettingJobs: TestSuite = ({ createDriver }) => {
   describe('getting jobs', () => {
     test('a job can be retrieved by it\'s id to get its status', async () => {
-      const { queue } = await createQueue({ generateJobId: () => '123' });
+      const { driver } = await createDriver();
+      const cadence = createCadence({ driver, generateJobId: () => '123' });
 
-      queue.registerTask({
-        name: 'test',
+      cadence.registerTask({
+        taskName: 'test',
         handler: async (args) => {
           return { biz: (args.data as any).foo };
         },
       });
 
-      expect(await queue.getJob({ jobId: '123' })).to.eql({ job: null });
+      expect(await cadence.getJob({ jobId: '123' })).to.eql({ job: null });
 
-      const { jobId } = await queue.scheduleJob({
+      const { jobId } = await cadence.scheduleJob({
         taskName: 'test',
         data: {
           foo: 'bar',
@@ -26,7 +28,7 @@ export const testGettingJobs: TestSuite = ({ createQueue }) => {
 
       expect(jobId).to.eql('123');
 
-      expect(await queue.getJob({ jobId: '123' })).to.eql({
+      expect(await cadence.getJob({ jobId: '123' })).to.eql({
         job: {
           id: '123',
           taskName: 'test',
@@ -43,11 +45,12 @@ export const testGettingJobs: TestSuite = ({ createQueue }) => {
         },
       });
 
-      queue.startWorker({ workerId: 'worker-1' });
+      const worker = cadence.createWorker({ workerId: 'worker-1' });
+      worker.start();
 
       await waitNextEventLoop();
 
-      const { job } = await queue.getJob({ jobId: '123' });
+      const { job } = await cadence.getJob({ jobId: '123' });
 
       expect(job).to.deep.include({
         id: '123',

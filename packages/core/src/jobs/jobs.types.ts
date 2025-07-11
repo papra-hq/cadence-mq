@@ -19,7 +19,7 @@ export type Job = {
 
 export type JobRepositoryDriver = {
   saveJob: (arg: { job: Job; getNow?: () => Date }) => Promise<void>;
-  fetchNextJob: (arg: { processingTimeoutMs: number; getNow?: () => Date; abortSignal?: AbortSignal }) => Promise<{ job: Job }>;
+  getNextJobAndMarkAsProcessing: (arg: { abortSignal: AbortSignal; getNow?: () => Date }) => Promise<{ job: Job }>;
   markJobAsCompleted: (arg: { jobId: string; getNow?: () => Date; result?: JobResult }) => Promise<void>;
   markJobAsFailed: (arg: { jobId: string; getNow?: () => Date; error: string }) => Promise<void>;
   getJob: (arg: { jobId: string }) => Promise<{ job: Job | null }>;

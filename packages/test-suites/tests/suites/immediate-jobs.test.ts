@@ -1,24 +1,27 @@
 import type { TestSuite } from '../types';
+import { createCadence } from '@cadence-mq/core';
 import { describe, expect, test } from 'vitest';
 import { waitNextEventLoop } from '../utils';
 
-export const testImmediateJobs: TestSuite = ({ createQueue }) => {
+export const testImmediateJobs: TestSuite = ({ createDriver }) => {
   describe('immediate jobs', () => {
     test('a job can be run immediately', async () => {
-      const { queue } = await createQueue();
+      const { driver } = await createDriver();
+      const cadence = createCadence({ driver });
 
       const { promise, resolve } = Promise.withResolvers<unknown>();
 
-      queue.registerTask({
-        name: 'test',
+      cadence.registerTask({
+        taskName: 'test',
         handler: async (args) => {
           resolve(args);
         },
       });
 
-      queue.startWorker({ workerId: 'worker-1' });
+      const worker = cadence.createWorker({ workerId: 'worker-1' });
+      worker.start();
 
-      await queue.scheduleJob({
+      await cadence.scheduleJob({
         taskName: 'test',
         data: {
           foo: 'bar',
@@ -36,32 +39,34 @@ export const testImmediateJobs: TestSuite = ({ createQueue }) => {
     });
 
     test('when multiple jobs are immediately scheduled, they are run in the order they were scheduled', async () => {
-      const { queue } = await createQueue();
+      const { driver } = await createDriver();
+      const cadence = createCadence({ driver });
       const runOrder: { id: number; runAt: Date }[] = [];
 
-      queue.registerTask({
-        name: 'test',
+      cadence.registerTask({
+        taskName: 'test',
         handler: async ({ data }) => {
           runOrder.push({ id: (data as any).id, runAt: new Date() });
         },
       });
 
-      await queue.scheduleJob({
+      await cadence.scheduleJob({
         taskName: 'test',
         data: { id: 1 },
       });
 
-      await queue.scheduleJob({
+      await cadence.scheduleJob({
         taskName: 'test',
         data: { id: 2 },
       });
 
-      await queue.scheduleJob({
+      await cadence.scheduleJob({
         taskName: 'test',
         data: { id: 3 },
       });
 
-      queue.startWorker({ workerId: 'worker-1' });
+      const worker = cadence.createWorker({ workerId: 'worker-1' });
+      worker.start();
 
       await waitNextEventLoop();
 

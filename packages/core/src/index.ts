@@ -1,4 +1,9 @@
 export {
+  type CadenceInstance,
+  createCadence,
+} from './cadence/cadence.factory';
+
+export {
   createError,
   createErrorFactory,
   isCadenceError,
@@ -12,6 +17,15 @@ export type {
 } from './jobs/jobs.types';
 
 export {
-  createQueue,
-  type Queue,
-} from './queue';
+  createScheduler,
+  scheduleJob,
+} from './scheduler/scheduler';
+
+export {
+  createTaskRegistry,
+  type TaskDefinitionRegistry,
+} from './tasks/task-definition.registry';
+
+export {
+  createWorker,
+} from './workers/workers.factory';

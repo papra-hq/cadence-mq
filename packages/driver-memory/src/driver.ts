@@ -64,12 +64,12 @@ export function createMemoryDriver(): JobRepositoryDriver {
   };
 
   return {
-    fetchNextJob: async ({ processingTimeoutMs, getNow = () => new Date() }) => {
+    getNextJobAndMarkAsProcessing: async ({ getNow = () => new Date() }) => {
       const { promise, resolve } = Promise.withResolvers<{ job: Job }>();
 
       pendingResolvers.push(resolve);
 
-      refreshConsumption({ processingTimeoutMs });
+      refreshConsumption({ processingTimeoutMs: 15_000, getNow }); // TODO: make this configurable
 
       const { job } = await promise;
 

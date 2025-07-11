@@ -1,4 +1,3 @@
-import type { Queue } from '@cadence-mq/core';
+import type { JobRepositoryDriver } from '@cadence-mq/core';
 
-export type QueueFactory = (arg?: { generateJobId?: () => string }) => Promise<{ queue: Queue }>;
-export type TestSuite = (arg: { createQueue: QueueFactory; processingLatencyMs?: number }) => void;
+export type TestSuite = (arg: { createDriver: () => Promise<{ driver: JobRepositoryDriver }>; processingLatencyMs?: number }) => void;

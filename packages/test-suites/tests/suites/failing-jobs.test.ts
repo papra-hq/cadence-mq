@@ -1,16 +1,18 @@
 import type { TestSuite } from '../types';
+import { createCadence } from '@cadence-mq/core';
 import { describe, expect, test } from 'vitest';
 import { waitNextEventLoop } from '../utils';
 
-export const testFailingJobs: TestSuite = ({ createQueue }) => {
+export const testFailingJobs: TestSuite = ({ createDriver }) => {
   describe('failing jobs', () => {
     test('a job can fail, if no retries are specified, it is marked as failed and the error is saved', async () => {
-      const { queue } = await createQueue({ generateJobId: () => '123' });
+      const { driver } = await createDriver();
+      const cadence = createCadence({ driver, generateJobId: () => '123' });
 
       const { promise, resolve } = Promise.withResolvers<unknown>();
 
-      queue.registerTask({
-        name: 'test',
+      cadence.registerTask({
+        taskName: 'test',
         handler: async (args) => {
           try {
             throw new Error('An error occurred');
@@ -20,21 +22,22 @@ export const testFailingJobs: TestSuite = ({ createQueue }) => {
         },
       });
 
-      await queue.scheduleJob({
+      await cadence.scheduleJob({
         taskName: 'test',
         data: {
           foo: 'bar',
         },
       });
 
-      queue.startWorker({ workerId: 'worker-1' });
+      const worker = cadence.createWorker({ workerId: 'worker-1' });
+      worker.start();
 
       await promise;
 
       // wait for the job result to be saved to the database
       await new Promise(resolve => setImmediate(resolve));
 
-      const { job } = await queue.getJob({ jobId: '123' });
+      const { job } = await cadence.getJob({ jobId: '123' });
 
       expect(job?.status).to.eql('failed');
 
@@ -47,12 +50,13 @@ export const testFailingJobs: TestSuite = ({ createQueue }) => {
     });
 
     test('when defining a task, you can specify the default number of retries for this task', async () => {
-      const { queue } = await createQueue({ generateJobId: () => '123' });
+      const { driver } = await createDriver();
+      const cadence = createCadence({ driver, generateJobId: () => '123' });
 
       let attempts = 0;
 
-      queue.registerTask({
-        name: 'test',
+      cadence.registerTask({
+        taskName: 'test',
         handler: async () => {
           attempts++;
 
@@ -63,31 +67,33 @@ export const testFailingJobs: TestSuite = ({ createQueue }) => {
         },
       });
 
-      await queue.scheduleJob({
+      await cadence.scheduleJob({
         taskName: 'test',
         data: {
           foo: 'bar',
         },
       });
 
-      queue.startWorker({ workerId: 'worker-1' });
+      const worker = cadence.createWorker({ workerId: 'worker-1' });
+      worker.start();
 
       await waitNextEventLoop();
 
       expect(attempts).to.eql(3);
 
-      const { job } = await queue.getJob({ jobId: '123' });
+      const { job } = await cadence.getJob({ jobId: '123' });
 
       expect(job?.status).to.eql('failed');
     });
 
     test('the amount of retry can be specified per job', async () => {
-      const { queue } = await createQueue({ generateJobId: () => '123' });
+      const { driver } = await createDriver();
+      const cadence = createCadence({ driver, generateJobId: () => '123' });
 
       let attempts = 0;
 
-      queue.registerTask({
-        name: 'test',
+      cadence.registerTask({
+        taskName: 'test',
         handler: async () => {
           attempts++;
 
@@ -95,7 +101,7 @@ export const testFailingJobs: TestSuite = ({ createQueue }) => {
         },
       });
 
-      await queue.scheduleJob({
+      await cadence.scheduleJob({
         taskName: 'test',
         data: {
           foo: 'bar',
@@ -103,23 +109,25 @@ export const testFailingJobs: TestSuite = ({ createQueue }) => {
         maxRetries: 2,
       });
 
-      queue.startWorker({ workerId: 'worker-1' });
+      const worker = cadence.createWorker({ workerId: 'worker-1' });
+      worker.start();
 
       await waitNextEventLoop();
 
       expect(attempts).to.eql(3);
 
-      const { job } = await queue.getJob({ jobId: '123' });
+      const { job } = await cadence.getJob({ jobId: '123' });
 
       expect(job?.status).to.eql('failed');
     });
 
     test('if both the task and the job specify the number of retries, the job takes precedence', async () => {
-      const { queue } = await createQueue({ generateJobId: () => '123' });
+      const { driver } = await createDriver();
+      const cadence = createCadence({ driver, generateJobId: () => '123' });
 
       let attempts = 0;
-      queue.registerTask({
-        name: 'test',
+      cadence.registerTask({
+        taskName: 'test',
         handler: async () => {
           attempts++;
 
@@ -130,7 +138,7 @@ export const testFailingJobs: TestSuite = ({ createQueue }) => {
         },
       });
 
-      await queue.scheduleJob({
+      await cadence.scheduleJob({
         taskName: 'test',
         data: {
           foo: 'bar',
@@ -138,13 +146,14 @@ export const testFailingJobs: TestSuite = ({ createQueue }) => {
         maxRetries: 3,
       });
 
-      queue.startWorker({ workerId: 'worker-1' });
+      const worker = cadence.createWorker({ workerId: 'worker-1' });
+      worker.start();
 
       await waitNextEventLoop();
 
       expect(attempts).to.eql(4);
 
-      const { job } = await queue.getJob({ jobId: '123' });
+      const { job } = await cadence.getJob({ jobId: '123' });
 
       expect(job?.status).to.eql('failed');
     });

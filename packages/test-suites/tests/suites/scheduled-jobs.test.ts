@@ -1,24 +1,27 @@
 import type { TestSuite } from '../types';
+import { createCadence } from '@cadence-mq/core';
 import { describe, expect, test } from 'vitest';
 
-export const testScheduledJobs: TestSuite = ({ createQueue, processingLatencyMs = 0 }) => {
+export const testScheduledJobs: TestSuite = ({ createDriver, processingLatencyMs = 0 }) => {
   describe('scheduled jobs', () => {
     test('a job can be scheduled in the future', async () => {
-      const { queue } = await createQueue();
+      const { driver } = await createDriver();
+      const cadence = createCadence({ driver });
 
       const scheduledAt = new Date(Date.now() + 50);
       const { promise, resolve } = Promise.withResolvers<Date>();
 
-      queue.registerTask({
-        name: 'test',
+      cadence.registerTask({
+        taskName: 'test',
         handler: async () => {
           resolve(new Date());
         },
       });
 
-      queue.startWorker({ workerId: 'worker-1' });
+      const worker = cadence.createWorker({ workerId: 'worker-1' });
+      worker.start();
 
-      await queue.scheduleJob({
+      await cadence.scheduleJob({
         taskName: 'test',
         data: {},
         scheduleAt: scheduledAt,
@@ -30,21 +33,23 @@ export const testScheduledJobs: TestSuite = ({ createQueue, processingLatencyMs 
     });
 
     test('a job scheduled in the past is run immediately', async () => {
-      const { queue } = await createQueue();
+      const { driver } = await createDriver();
+      const cadence = createCadence({ driver });
 
       const scheduledAt = new Date(Date.now() - 1000 * 60);
       const { promise, resolve } = Promise.withResolvers<Date>();
 
-      queue.registerTask({
-        name: 'test',
+      cadence.registerTask({
+        taskName: 'test',
         handler: async () => {
           resolve(new Date());
         },
       });
 
-      queue.startWorker({ workerId: 'worker-1' });
+      const worker = cadence.createWorker({ workerId: 'worker-1' });
+      worker.start();
 
-      await queue.scheduleJob({
+      await cadence.scheduleJob({
         taskName: 'test',
         data: {},
         scheduleAt: scheduledAt,
@@ -60,13 +65,14 @@ export const testScheduledJobs: TestSuite = ({ createQueue, processingLatencyMs 
     });
 
     test('jobs are executed in the order of their schedule, regardless of the order they were scheduled in', async () => {
-      const { queue } = await createQueue();
+      const { driver } = await createDriver();
+      const cadence = createCadence({ driver });
 
       const runOrder: { id: number; runAt: Date }[] = [];
       const { promise, resolve } = Promise.withResolvers<void>();
 
-      queue.registerTask({
-        name: 'test',
+      cadence.registerTask({
+        taskName: 'test',
         handler: async ({ data }) => {
           runOrder.push({ id: (data as any).id, runAt: new Date() });
 
@@ -78,25 +84,26 @@ export const testScheduledJobs: TestSuite = ({ createQueue, processingLatencyMs 
 
       const now = new Date();
 
-      await queue.scheduleJob({
+      await cadence.scheduleJob({
         taskName: 'test',
         data: { id: 1 },
         scheduleAt: new Date(now.getTime() + 20),
       });
 
-      await queue.scheduleJob({
+      await cadence.scheduleJob({
         taskName: 'test',
         data: { id: 2 },
         scheduleAt: new Date(now.getTime() + 5),
       });
 
-      await queue.scheduleJob({
+      await cadence.scheduleJob({
         taskName: 'test',
         data: { id: 3 },
         scheduleAt: new Date(now.getTime() + 10),
       });
 
-      queue.startWorker({ workerId: 'worker-1' });
+      const worker = cadence.createWorker({ workerId: 'worker-1' });
+      worker.start();
 
       await promise;
 

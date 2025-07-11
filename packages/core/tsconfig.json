@@ -4,7 +4,6 @@
     "moduleDetection": "force",
     "module": "preserve",
     "resolveJsonModule": true,
-    "types": ["node"],
     "allowJs": true,
     "strict": true,
     "noImplicitOverride": true,

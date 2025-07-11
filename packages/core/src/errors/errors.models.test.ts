@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { serializeError } from './errors.models';
+import { safely, serializeError } from './errors.models';
 
 describe('errors models', () => {
   describe('serializeError', () => {
@@ -25,6 +25,31 @@ describe('errors models', () => {
       expect(serializeError({ error: false })).toBe('false');
       expect(serializeError({ error: null })).toBe('null');
       expect(serializeError({ error: undefined })).toBe('undefined');
+    });
+  });
+
+  describe('safely', () => {
+    describe('functional dx helper to reduce indentation hell due to try/catch', () => {
+      test('given a promise, returns a tuple with the error and the result', async () => {
+        expect(
+          await safely(Promise.resolve('test')),
+        ).to.eql(
+          [undefined, 'test'],
+        );
+
+        expect(
+          await safely(Promise.reject(new Error('test'))),
+        ).to.eql(
+          [new Error('test'), undefined],
+        );
+
+        expect(
+          // eslint-disable-next-line prefer-promise-reject-errors
+          await safely(Promise.reject(123)),
+        ).to.eql(
+          [new Error('123'), undefined],
+        );
+      });
     });
   });
 });

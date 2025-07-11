@@ -38,11 +38,13 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "vitest run",
-    "test:watch": "vitest watch"
+    "test:watch": "vitest watch",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@corentinth/chisels": "^1.3.1",
-    "nanoid": "^5.1.5"
+    "@paralleldrive/cuid2": "^2.2.2",
+    "@standard-schema/spec": "^1.0.0"
   },
   "devDependencies": {
     "@antfu/eslint-config": "catalog:",
@@ -50,6 +52,8 @@
     "eslint": "catalog:",
     "tsdown": "catalog:",
     "typescript": "catalog:",
-    "vitest": "catalog:"
+    "valibot": "^1.1.0",
+    "vitest": "catalog:",
+    "zod": "^4.0.5"
   }
 }
