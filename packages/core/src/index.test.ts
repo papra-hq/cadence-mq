@@ -6,6 +6,8 @@ describe('core', () => {
     expect(Object.keys(exported)).toMatchInlineSnapshot(`
       [
         "createCadence",
+        "createJobNotFoundError",
+        "createJobWithSameIdExistsError",
         "createError",
         "createErrorFactory",
         "isCadenceError",

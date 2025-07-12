@@ -4,10 +4,15 @@ export {
 } from './cadence/cadence.factory';
 
 export {
+  createJobNotFoundError,
+  createJobWithSameIdExistsError,
+} from './errors/errors.definitions';
+
+export {
   createError,
   createErrorFactory,
   isCadenceError,
-} from './errors/errors';
+} from './errors/errors.models';
 
 export type {
   Job,

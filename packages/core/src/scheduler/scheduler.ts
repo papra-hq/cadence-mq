@@ -1,6 +1,7 @@
 import type { Job, JobData, JobRepositoryDriver } from '../jobs/jobs.types';
 import type { TaskDefinitionRegistry } from '../tasks/task-definition.registry';
 import { createId } from '@paralleldrive/cuid2';
+import { validateTaskData } from '../tasks/tasks.usecases';
 
 export async function scheduleJob({
   taskName,
@@ -21,22 +22,12 @@ export async function scheduleJob({
   taskRegistry?: TaskDefinitionRegistry;
   generateJobId?: () => string;
 }) {
-  if (taskRegistry) {
-    const { taskDefinition } = taskRegistry.getTaskOrThrow({ taskName });
-
-    const result = await taskDefinition.schema?.data?.['~standard'].validate(data);
-
-    if (result?.issues) {
-      throw new Error(`Invalid data for task ${taskName}: ${JSON.stringify(result.issues)}`);
-    }
-
-    data = (result?.value as JobData) ?? data;
-  }
+  const validatedData = await validateTaskData({ taskRegistry, taskName, data });
 
   const job: Job = {
     id: generateJobId(),
     taskName,
-    data,
+    data: validatedData as JobData,
     scheduleAt,
     status: 'pending',
     maxRetries,
@@ -47,6 +38,6 @@ export async function scheduleJob({
   return { jobId: job.id };
 }
 
-export function createScheduler({ driver, taskRegistry, generateJobId }: { driver: JobRepositoryDriver; taskRegistry: TaskDefinitionRegistry; generateJobId?: () => string }) {
-  return (args: Omit<Parameters<typeof scheduleJob>[0], 'driver' | 'taskRegistry' | 'generateJobId'>) => scheduleJob({ ...args, driver, taskRegistry, generateJobId });
+export function createScheduler({ driver, taskRegistry, generateJobId, getNow }: { driver: JobRepositoryDriver; taskRegistry: TaskDefinitionRegistry; generateJobId?: () => string; getNow?: () => Date }) {
+  return (args: Omit<Parameters<typeof scheduleJob>[0], 'driver' | 'taskRegistry' | 'generateJobId'>) => scheduleJob({ ...args, driver, taskRegistry, generateJobId, getNow });
 }

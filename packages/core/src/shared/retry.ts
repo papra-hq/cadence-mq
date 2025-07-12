@@ -1,7 +1,7 @@
 export async function retry<T>(
   fn: () => Promise<T>,
   { maxRetries = 0 }: { maxRetries?: number } = {},
-): Promise<T> {
+): Promise<T | undefined> {
   if (maxRetries < 0) {
     throw new TypeError('maxRetries must be greater than 0');
   }

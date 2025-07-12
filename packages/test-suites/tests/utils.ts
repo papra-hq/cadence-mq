@@ -5,3 +5,4 @@ export function createIdGenerator() {
 }
 
 export const waitNextEventLoop = () => new Promise(resolve => setImmediate(resolve));
+// export const waitNextEventLoop = () => new Promise(resolve => Promise.resolve().then(resolve));

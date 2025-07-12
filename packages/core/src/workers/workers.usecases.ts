@@ -5,7 +5,7 @@ import { safely, serializeError } from '../errors/errors.models';
 import { processJob } from '../jobs/jobs.usecases';
 import { createTaskExecutionContext } from '../tasks/tasks.models';
 
-export async function consumeJob({
+async function consumeJob({
   driver,
   taskRegistry,
   workerId,

@@ -6,12 +6,6 @@ export type TaskOptions = {
   retryBackoff?: 'linear' | 'exponential' | ((args: { attempt: number }) => number);
 };
 
-// export type TaskDefinition<TData = JobData, TResult = JobResult> = {
-//   name: string;
-//   options?: TaskOptions;
-//   handler: (args: { data: TData; context: TaskContext }) => Promise<TResult | undefined | void>;
-// };
-
 export type TaskDefinition<ArgsSchema extends StandardSchemaV1 = StandardSchemaV1, TResult = JobResult> = {
   taskName: string;
   options?: TaskOptions;
