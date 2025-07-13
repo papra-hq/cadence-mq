@@ -8,7 +8,9 @@
   "keywords": [],
   "main": "index.ts",
   "scripts": {
-    "start:local-sqlite": "tsx local-sqlite/index.ts",
+    "start:libsql-local-file": "tsx libsql-local-file/index.ts",
+    "start:libsql-memory": "tsx libsql-memory/index.ts",
+    "start:libsql-remote-server": "tsx libsql-remote-server/index.ts",
     "start:in-memory": "tsx in-memory/index.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
