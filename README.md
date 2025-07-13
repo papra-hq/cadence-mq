@@ -77,7 +77,7 @@ const worker = cadence.createWorker({ workerId: '1' });
 
 worker.start();
 
-cadence.scheduleJob({
+await cadence.scheduleJob({
   taskName: 'send-welcome-email',
   data: { email: 'test@test.com' },
 });
