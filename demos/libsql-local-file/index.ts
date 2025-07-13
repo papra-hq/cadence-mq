@@ -24,7 +24,7 @@ const worker = cadence.createWorker({ workerId: '1' });
 worker.start();
 
 // Schedule a job to be executed as soon as possible
-cadence.scheduleJob({
+await cadence.scheduleJob({
   taskName: 'send-welcome-email',
   data: { email: 'test@test.com' },
 });
