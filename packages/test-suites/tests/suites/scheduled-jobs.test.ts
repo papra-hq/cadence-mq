@@ -24,7 +24,7 @@ export const testScheduledJobs: TestSuite = ({ createDriver, processingLatencyMs
       await cadence.scheduleJob({
         taskName: 'test',
         data: {},
-        scheduleAt: scheduledAt,
+        scheduledAt,
       });
 
       const runAt = await promise;
@@ -52,7 +52,7 @@ export const testScheduledJobs: TestSuite = ({ createDriver, processingLatencyMs
       await cadence.scheduleJob({
         taskName: 'test',
         data: {},
-        scheduleAt: scheduledAt,
+        scheduledAt,
       });
 
       const before = Date.now();
@@ -87,19 +87,19 @@ export const testScheduledJobs: TestSuite = ({ createDriver, processingLatencyMs
       await cadence.scheduleJob({
         taskName: 'test',
         data: { id: 1 },
-        scheduleAt: new Date(now.getTime() + 20),
+        scheduledAt: new Date(now.getTime() + 20),
       });
 
       await cadence.scheduleJob({
         taskName: 'test',
         data: { id: 2 },
-        scheduleAt: new Date(now.getTime() + 5),
+        scheduledAt: new Date(now.getTime() + 5),
       });
 
       await cadence.scheduleJob({
         taskName: 'test',
         data: { id: 3 },
-        scheduleAt: new Date(now.getTime() + 10),
+        scheduledAt: new Date(now.getTime() + 10),
       });
 
       const worker = cadence.createWorker({ workerId: 'worker-1' });

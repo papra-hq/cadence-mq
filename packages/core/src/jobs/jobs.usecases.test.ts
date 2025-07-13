@@ -16,7 +16,7 @@ describe('jobs usecases', () => {
       data: {
         test: 'test',
       },
-      scheduleAt: new Date('2025-01-01'),
+      scheduledAt: new Date('2025-01-01'),
     };
 
     test('execute the task handler for a job, providing the job data and the task execution context and returning the handler result', async () => {

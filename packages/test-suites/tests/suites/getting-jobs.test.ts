@@ -23,7 +23,7 @@ export const testGettingJobs: TestSuite = ({ createDriver }) => {
         data: {
           foo: 'bar',
         },
-        scheduleAt: new Date('2025-01-01'),
+        scheduledAt: new Date('2025-01-01'),
       });
 
       expect(jobId).to.eql('123');
@@ -38,7 +38,7 @@ export const testGettingJobs: TestSuite = ({ createDriver }) => {
           },
           error: undefined,
           completedAt: undefined,
-          scheduleAt: new Date('2025-01-01'),
+          scheduledAt: new Date('2025-01-01'),
           startedAt: undefined,
           maxRetries: undefined,
           result: undefined,
@@ -59,7 +59,7 @@ export const testGettingJobs: TestSuite = ({ createDriver }) => {
         data: {
           foo: 'bar',
         },
-        scheduleAt: new Date('2025-01-01'),
+        scheduledAt: new Date('2025-01-01'),
         maxRetries: undefined,
         result: {
           biz: 'bar',

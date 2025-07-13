@@ -17,10 +17,10 @@ CREATE TABLE IF NOT EXISTS jobs (
   error TEXT,
   data TEXT,
   result TEXT,
-  schedule_at DATETIME NOT NULL
+  scheduled_at DATETIME NOT NULL
 );
 
-CREATE INDEX IF NOT EXISTS jobs_status_schedule_at_started_at_idx ON jobs (status, schedule_at, started_at);
+CREATE INDEX IF NOT EXISTS jobs_status_scheduled_at_started_at_idx ON jobs (status, scheduled_at, started_at);
   `.trim();
 }
 

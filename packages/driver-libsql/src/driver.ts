@@ -12,8 +12,8 @@ async function getAndMarkJobAsProcessing({ client, now = new Date() }: { client:
       WHERE id = (
         SELECT id 
         FROM jobs 
-        WHERE status = 'pending' AND schedule_at <= ?
-        ORDER BY schedule_at ASC 
+        WHERE status = 'pending' AND scheduled_at <= ?
+        ORDER BY scheduled_at ASC 
         LIMIT 1
       ) AND status = 'pending'
       RETURNING *
@@ -41,7 +41,7 @@ function toJob(row: Row): Job {
     data: row.data ? JSON.parse(String(row.data)) : undefined,
     result: row.result ? JSON.parse(String(row.result)) : undefined,
     error: row.error ? String(row.error) : undefined,
-    scheduleAt: new Date(row.schedule_at as unknown as string),
+    scheduledAt: new Date(row.scheduled_at as unknown as string),
   };
 }
 
@@ -61,8 +61,8 @@ export function createLibSqlDriver({ client, pollIntervalMs = DEFAULT_POLL_INTER
     },
     saveJob: async ({ job, getNow = () => new Date() }) => {
       await client.batch([{
-        sql: 'INSERT INTO jobs (id, task_name, status, created_at, max_retries, data, schedule_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        args: [job.id, job.taskName, job.status, getNow(), job.maxRetries ?? null, JSON.stringify(job.data), job.scheduleAt],
+        sql: 'INSERT INTO jobs (id, task_name, status, created_at, max_retries, data, scheduled_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        args: [job.id, job.taskName, job.status, getNow(), job.maxRetries ?? null, JSON.stringify(job.data), job.scheduledAt],
       }], 'write');
     },
     markJobAsCompleted: async ({ jobId, getNow = () => new Date(), result }) => {

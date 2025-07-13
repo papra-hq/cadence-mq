@@ -1,0 +1,74 @@
+---
+title: Scheduled jobs
+description: How to schedule a job to be executed at a specific time
+slug: guides/scheduled-jobs
+sidebar:
+  order: 2
+---
+
+This guide will show you how to schedule a job to be executed at a specific time.
+
+## Schedule a job at a specific time
+
+You can schedule a job to be executed at a specific time by providing the `scheduledAt` option with a `Date` object:
+
+```ts title="index.ts" collapse={1-12} ins={20-21}
+import { createCadence } from '@cadence-mq/core';
+import { createMemoryDriver } from '@cadence-mq/driver-memory';
+
+const driver = createMemoryDriver();
+const cadence = createCadence({ driver });
+
+cadence.registerTask({
+  taskName: 'send-reminder-email',
+  handler: async ({ data }) => {
+    console.log(`Sending reminder email to ${data.email}`);
+  },
+});
+
+
+await cadence.scheduleJob({
+  taskName: 'send-reminder-email',
+  data: {
+    email: 'user@example.com',
+  },
+  // Schedule job to run at a specific time
+  scheduledAt: new Date('2025-05-12'),
+});
+```
+
+## Schedule a job with a delay
+
+You can also schedule a job to run after a specific delay by adding milliseconds to the current time:
+
+```ts title="index.ts" collapse={1-12} ins={22,14-15}
+import { createCadence } from '@cadence-mq/core';
+import { createMemoryDriver } from '@cadence-mq/driver-memory';
+
+const driver = createMemoryDriver();
+const cadence = createCadence({ driver });
+
+cadence.registerTask({
+  taskName: 'send-follow-up-email',
+  handler: async ({ data }) => {
+    console.log(`Sending follow-up email to ${data.email}`);
+  },
+});
+
+// Schedule job to run in 1 hour
+const oneHourFromNow = new Date(Date.now() + 60 * 60 * 1000);
+
+await cadence.scheduleJob({
+  taskName: 'send-follow-up-email',
+  data: {
+    email: 'user@example.com',
+  },
+  scheduledAt: oneHourFromNow,
+});
+```
+
+## Important notes
+
+- The `scheduledAt` date must be in the future. If you provide a date in the past, the job will be executed immediately.
+- The timezone of the `Date` object will be used for scheduling. Make sure to use the appropriate timezone for your use case. Tip: run you workers process in the same timezone as the process that schedules the jobs.
+- Jobs are executed based on the system time of the worker process. 

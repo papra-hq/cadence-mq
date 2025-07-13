@@ -24,6 +24,10 @@ export default defineConfig({
           label: 'Drivers',
           autogenerate: { directory: '02-drivers' },
         },
+        {
+          label: 'Guides',
+          autogenerate: { directory: '03-guides' },
+        },
       ],
       editLink: {
         baseUrl: 'https://github.com/papra-hq/cadence-mq/edit/main/docs/',

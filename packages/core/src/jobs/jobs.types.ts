@@ -14,7 +14,7 @@ export type Job = {
   maxRetries?: number;
   data?: JobData;
   result?: JobResult;
-  scheduleAt: Date;
+  scheduledAt: Date;
 };
 
 export type JobRepositoryDriver = {

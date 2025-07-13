@@ -4,7 +4,7 @@ import { setupSchema } from './migrations';
 
 describe('migrations', () => {
   describe('runMigrations', () => {
-    test('the migration create a "jobs" table and an index on "status" and "schedule_at"', async () => {
+    test('the migration create a "jobs" table and an index on "status" and "scheduled_at"', async () => {
       const client = createClient({ url: ':memory:' });
 
       await setupSchema({ client });
@@ -20,7 +20,7 @@ describe('migrations', () => {
       const indexes = rows.filter(row => row.type === 'index').map(row => row.name);
       expect(indexes).to.eql([
         'sqlite_autoindex_jobs_1', // auto-generated index for the primary key
-        'jobs_status_schedule_at_started_at_idx',
+        'jobs_status_scheduled_at_started_at_idx',
       ]);
     });
   });

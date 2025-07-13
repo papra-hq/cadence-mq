@@ -7,7 +7,7 @@ function getNextJob({ jobsRegistry, processingExpiresAt }: { jobsRegistry: Map<s
   const isJobSelectable = (job: Job) => job.status === 'pending' || (job.status === 'processing');
   const isJobScheduledEarlier = (job: Job) =>
     nextJob === null
-    || (job.status === 'pending' && job.scheduleAt < nextJob.scheduleAt)
+    || (job.status === 'pending' && job.scheduledAt < nextJob.scheduledAt)
     || (job.status === 'processing' && job.startedAt && job.startedAt < processingExpiresAt);
 
   for (const job of jobsRegistry.values()) {
@@ -47,7 +47,7 @@ export function createMemoryDriver(): JobRepositoryDriver {
       return;
     }
 
-    const availableAt = nextJob.status === 'pending' ? nextJob.scheduleAt : processingExpiresAt;
+    const availableAt = nextJob.status === 'pending' ? nextJob.scheduledAt : processingExpiresAt;
     const deltaMs = availableAt.getTime() - now.getTime();
 
     if (deltaMs <= 0) {

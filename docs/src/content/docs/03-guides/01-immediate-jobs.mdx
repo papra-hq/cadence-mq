@@ -1,0 +1,58 @@
+---
+title: Immediate jobs
+description: How to schedule a job to be executed as soon as possible
+slug: guides/immediate-jobs
+sidebar:
+  order: 1
+---
+
+This guide will show you how to schedule a job to be executed as soon as possible.
+
+## Schedule a job to be executed as soon as possible
+
+```ts title="index.ts" collapse={1-12}
+import { createCadence } from '@cadence-mq/core';
+import { createMemoryDriver } from '@cadence-mq/driver-memory';
+
+const driver = createMemoryDriver();
+const cadence = createCadence({ driver });
+
+cadence.registerTask({
+  taskName: 'send-welcome-email',
+  handler: async ({ data }) => {
+    console.log(`Sending welcome email to ${data.email}`);
+  },
+});
+
+await cadence.scheduleJob({
+  taskName: 'send-welcome-email',
+  data: {
+    email: 'test@test.com',
+  },
+});
+```
+
+Which the same as specifying the `scheduledAt` option with the current date:
+
+```ts title="index.ts" collapse={1-12}
+import { createCadence } from '@cadence-mq/core';
+import { createMemoryDriver } from '@cadence-mq/driver-memory';
+
+const driver = createMemoryDriver();
+const cadence = createCadence({ driver });
+
+cadence.registerTask({
+  taskName: 'send-welcome-email',
+  handler: async ({ data }) => {
+    console.log(`Sending welcome email to ${data.email}`);
+  },
+});
+
+await cadence.scheduleJob({
+  taskName: 'send-welcome-email',
+  data: {
+    email: 'test@test.com', 
+  },
+  scheduledAt: new Date(),
+});
+```

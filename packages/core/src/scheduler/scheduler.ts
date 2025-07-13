@@ -7,7 +7,7 @@ export async function scheduleJob({
   taskName,
   data,
   getNow = () => new Date(),
-  scheduleAt = getNow(),
+  scheduledAt = getNow(),
   maxRetries,
   driver,
   taskRegistry,
@@ -15,7 +15,7 @@ export async function scheduleJob({
 }: {
   taskName: string;
   data: JobData;
-  scheduleAt?: Date;
+  scheduledAt?: Date;
   getNow?: () => Date;
   maxRetries?: number;
   driver: JobRepositoryDriver;
@@ -28,7 +28,7 @@ export async function scheduleJob({
     id: generateJobId(),
     taskName,
     data: validatedData as JobData,
-    scheduleAt,
+    scheduledAt,
     status: 'pending',
     maxRetries,
   };
