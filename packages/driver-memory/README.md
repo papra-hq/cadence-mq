@@ -1,6 +1,6 @@
 # @cadence-mq/driver-memory
 
-Memory driver for Cadence MQ.
+Memory driver for CadenceMQ.
 
 ## Installation
 

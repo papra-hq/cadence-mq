@@ -1,6 +1,6 @@
 # @cadence-mq/driver-libsql
 
-LibSQL driver for Cadence MQ.
+LibSQL driver for CadenceMQ.
 
 ## Installation
 

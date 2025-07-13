@@ -7,7 +7,7 @@ import starlightNextjsTheme from 'starlight-nextjs-theme';
 export default defineConfig({
   integrations: [
     starlight({
-      title: 'Cadence MQ',
+      title: 'CadenceMQ',
       logo: {
         alt: 'CadenceMQ logo',
         light: './src/assets/logo-dark.svg',

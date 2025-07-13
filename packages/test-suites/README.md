@@ -1,3 +1,3 @@
 # @cadence-mq/test-suites
 
-A collection of test suites for testing Cadence MQ drivers.
+A collection of test suites for testing CadenceMQ drivers.

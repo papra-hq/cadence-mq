@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "private": true,
   "packageManager": "pnpm@10.10.0",
-  "description": "A collection of test suites for testing Cadence MQ drivers.",
+  "description": "A collection of test suites for testing CadenceMQ drivers.",
   "author": "Corentin Thomasset <corentinth@proton.me> (https://corentin.tech)",
   "license": "MIT",
   "homepage": "https://github.com/papra-hq/cadence-mq/tree/main/packages/test-suites",

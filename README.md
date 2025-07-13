@@ -7,10 +7,10 @@
 </p>
 
 <h1 align="center">
-  Cadence MQ - Job scheduling library
+  CadenceMQ - Job scheduling library
 </h1>
 <p align="center">
-  Cadence MQ is a job scheduling library for Node.js. It is designed to be easy to use, flexible, and scalable.
+  CadenceMQ is a job scheduling library for Node.js. It is designed to be easy to use, flexible, and scalable.
 </p>
 
 
@@ -33,7 +33,7 @@
 ## Why another job scheduling library?
 
 There are many job scheduling libraries of quality, but most of them are tied to a specific backend, like BullMQ with Redis or Agenda with MongoDB.
-Cadence MQ is designed to be **backend agnostic**, and can be used with different backends, the motivation is to provide a simple simple for self-hostable applications but being able to scale horizontally in production environments.
+CadenceMQ is designed to be **backend agnostic**, and can be used with different backends, the motivation is to provide a simple simple for self-hostable applications but being able to scale horizontally in production environments.
 
 This as been initially created for [Papra](https://papra.app), a self-hostable minimalistic document management platform, as we didn't want the self-hosters to have to setup a Redis.
 
@@ -99,7 +99,7 @@ If you find this project helpful, please consider [supporting my work](https://b
 
 ## Acknowledgements
 
-Cadence MQ is inspired by some great projects:
+CadenceMQ is inspired by some great projects:
 
 - [Agenda](https://github.com/agenda/agenda), a task runner and scheduler based on MongoDB.
 - [Pulse](https://github.com/pulsecron/pulse), a fork of Agenda with extended features.

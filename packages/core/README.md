@@ -1,6 +1,6 @@
 # @cadence-mq/core
 
-Core library for Cadence MQ.
+Core library for CadenceMQ.
 
 ## Installation
 

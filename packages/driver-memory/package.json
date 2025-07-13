@@ -3,7 +3,7 @@
   "type": "module",
   "version": "0.0.0",
   "packageManager": "pnpm@10.10.0",
-  "description": "Memory driver for Cadence MQ",
+  "description": "Memory driver for CadenceMQ",
   "author": "Corentin Thomasset <corentinth@proton.me> (https://corentin.tech)",
   "license": "MIT",
   "homepage": "https://github.com/papra-hq/cadence-mq/tree/main/packages/driver-memory",
