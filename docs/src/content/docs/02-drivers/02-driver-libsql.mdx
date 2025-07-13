@@ -39,13 +39,38 @@ The LibSQL driver can be installed with the `@cadence-mq/driver-libsql` package,
   </TabItem>
 </Tabs>
 
+## Setup the schema
+
+In order to use the LibSQL driver, you need to setup the schema for the database. This can be done once at startup, and is done by calling the `setupSchema` function, this function is exported from the `@cadence-mq/driver-libsql` package and will create the necessary tables and indexes for the driver to work, it can be executed just once, and is safe to execute multiple times.
+
+You can also use the `getSchema` function to get the schema as a string, and execute it manually.
+
+import { getSchema } from '@cadence-mq/driver-libsql';
+
+<Tabs>
+  <TabItem label="Programmatically">
+```ts title="index.ts"
+import { setupSchema } from '@cadence-mq/driver-libsql';
+import { createClient } from '@libsql/client';
+
+const client = createClient({ /**/ });
+
+// Setup the schema
+await setupSchema({ client });
+```
+  </TabItem>
+  <TabItem label="Manually">
+    <Code lang="sql" code={getSchema()} title="schema.sql" />
+  </TabItem>
+</Tabs>
+
 ## Local SQLite file example
 
 Here is a simple example of how to use the LibSQL driver to store jobs in a local SQLite file.
 
 import libSqlDemoLocalFile from '/../demos/libsql-local-file/index.ts?raw';
 
-<Code lang="ts" code={libSqlDemoLocalFile} title="index.ts" collapse="11-100" />
+<Code lang="ts" code={libSqlDemoLocalFile} title="index.ts" collapse="14-100" />
 
 ## Remote LibSQL server example
 
@@ -53,7 +78,7 @@ Here is a simple example of how to use the LibSQL driver to store jobs in a remo
 
 import libSqlDemoRemoteServer from '/../demos/libsql-remote-server/index.ts?raw';
 
-<Code lang="ts" code={libSqlDemoRemoteServer} title="index.ts" collapse="14-100" />
+<Code lang="ts" code={libSqlDemoRemoteServer} title="index.ts" collapse="17-100" />
 
 ## In-process example
 
@@ -61,7 +86,7 @@ Here is a simple example of how to use the LibSQL driver to store jobs in-proces
 
 import libSqlDemoMemory from '/../demos/libsql-memory/index.ts?raw';
 
-<Code lang="ts" code={libSqlDemoMemory} title="index.ts" collapse="9-100" />
+<Code lang="ts" code={libSqlDemoMemory} title="index.ts" collapse="12-100" />
 
 <Aside type="note">
   As for the [in-memory driver](/drivers/memory-driver), using the LibSQL driver with an `:memory:` comes with some limitations: no persistence, no distributed support, and memory consumption, more details in the [in-memory driver](/drivers/memory-driver#limitations) documentation.

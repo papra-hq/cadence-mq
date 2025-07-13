@@ -1,5 +1,5 @@
 import { createCadence } from '@cadence-mq/core';
-import { createLibSqlDriver } from '@cadence-mq/driver-libsql';
+import { createLibSqlDriver, setupSchema } from '@cadence-mq/driver-libsql';
 import { createClient } from '@libsql/client';
 
 const fileUrl = 'file:./cadence-mq.db';
@@ -7,6 +7,9 @@ const fileUrl = 'file:./cadence-mq.db';
 const client = createClient({ url: fileUrl });
 const driver = createLibSqlDriver({ client });
 const cadence = createCadence({ driver });
+
+// Setup the schema for the database, can be done once at startup
+await setupSchema({ client });
 
 // Register a task to be executed
 cadence.registerTask({
