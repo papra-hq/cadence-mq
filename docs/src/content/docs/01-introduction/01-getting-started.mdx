@@ -1,0 +1,45 @@
+---
+title: Getting started
+description: Get started with CadenceMQ.
+slug: getting-started
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import { Code } from '@astrojs/starlight/components';
+
+Get started with CadenceMQ by installing the core package and a driver, this example uses the same-process in-memory driver.
+
+## Installation
+
+You can install CadenceMQ using your favorite package manager.
+
+<Tabs>
+  <TabItem label="pnpm">
+    ```bash frame=none
+    pnpm add @cadence-mq/core @cadence-mq/driver-memory
+    ```
+  </TabItem>
+  <TabItem label="npm">
+    ```bash frame=none
+    npm install @cadence-mq/core @cadence-mq/driver-memory
+    ```
+  </TabItem>
+  <TabItem label="bun">
+    ```bash frame=none
+    bun add @cadence-mq/core @cadence-mq/driver-memory
+    ```
+  </TabItem>
+  <TabItem label="yarn">
+    ```bash frame=none
+    yarn add @cadence-mq/core @cadence-mq/driver-memory
+    ```
+  </TabItem>
+</Tabs>
+
+## Usage
+
+The CadenceMQ core package is the main package that you will use to create your jobs and schedule them, you'll also need to install a driver to store your jobs.
+
+import inMemoryDemo from '/../demos/in-memory/index.ts?raw';
+
+<Code lang="ts" code={inMemoryDemo} title="index.ts" />

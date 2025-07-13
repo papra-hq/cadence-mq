@@ -1,0 +1,61 @@
+:root {
+    --sl-mobile-toc-height: 50px;
+}
+
+:root[data-theme='dark'] {
+    --sl-color-text-accent: #fff;
+    --sl-color-accent: var(--sl-color-text-accent);
+    --sl-color-accent-high: var(--sl-color-accent);
+}
+
+:root[data-theme='light'] {
+    --sl-color-text-accent: #000;
+    --sl-color-accent: var(--sl-color-text-accent);
+}
+
+.sidebar-content a {
+    padding: 0.375rem 0.25rem;
+}
+
+.hero h1 {
+    font-size: 2.5rem;
+}
+
+.hero .sl-link-button.primary {
+    background-color: var(--sl-color-text-accent)!important;
+    border-color: transparent!important;
+    color: var(--sl-color-bg)!important;
+    border-radius: 0.8rem!important;
+    transition: opacity 0.2s ease-in-out!important;
+    font-weight: 500!important;
+}
+
+
+
+.hero .sl-link-button.primary:hover {
+    opacity: 0.8!important;
+}
+
+.right-sidebar mobile-starlight-toc > nav summary {
+    margin-top: 0;
+}
+
+.site-title {
+    gap: 0.75rem !important;
+    padding-left: 0.5rem !important;
+}
+
+.site-title img {
+    width: 1.6rem !important;
+    transition: transform 0.2s ease-in-out !important;
+} 
+
+.site-title:hover img {
+    transform: rotate(12deg);
+    transition: transform 0.2s ease-in-out !important;
+} 
+
+.sidebar-content {
+    border-right: 1px solid var(--sl-color-hairline);
+    margin-right: 1.5rem;
+}

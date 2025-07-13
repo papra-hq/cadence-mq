@@ -5,10 +5,11 @@ export default antfu({
     semi: true,
   },
 
+  astro: true,
+
   rules: {
     'antfu/no-top-level-await': 'off',
     'no-console': 'off',
-    'node/prefer-global/process': 'off',
     // To allow export on top of files
     'ts/no-use-before-define': ['error', { allowNamedExports: true, functions: false }],
     'curly': ['error', 'all'],

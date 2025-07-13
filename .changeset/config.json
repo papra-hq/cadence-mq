@@ -10,7 +10,7 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["@cadence-mq/demos"],
+  "ignore": ["@cadence-mq/demos", "@cadence-mq/docs", "@cadence-mq/test-suites"],
   "___experimentalUnsafeOptions_WILL_CHANGE_IN_PATCH": {
     "onlyUpdatePeerDependentsWhenOutOfRange": true
   }

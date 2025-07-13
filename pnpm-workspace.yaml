@@ -1,6 +1,7 @@
 packages:
   - packages/*
   - demos
+  - docs
 
 catalog:
   "@antfu/eslint-config": ^4.16.2

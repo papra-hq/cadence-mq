@@ -1,0 +1,34 @@
+---
+title: Why CadenceMQ?
+description: Why another job scheduling library for Node.js?
+slug: why-cadence-mq
+---
+
+While the Node.js ecosystem is full of job scheduling libraries of all shapes and sizes, we felt the need for a more robust and flexible solution.
+
+## Why another job scheduling library?
+
+The main reason is that we wanted to create a job scheduling library that **is backend agnostic**, meaning that you can use it with any database or storage system.
+
+The initial need came from the self-hosting world, where the extreme majority of the people deploying their own services doesn't need to have a ultra-high-availability, latency-sensitive, distributed system that needs to be able to scale horizontally and handle high-traffic.
+
+Most of the Node.js job scheduling libraries are tied to a specific database or storage system like Redis for [BullMQ](https://github.com/taskforcesh/bullmq), [Bee-Queue](https://github.com/bee-queue/bee-queue) or MongoDB for [Agenda](https://github.com/agenda/agenda), which is not ideal for self-hosting as it forces the user to have to setup an external Redis or MongoDB instance just for dealing with less than 10 jobs per day.
+
+## Multiple backends support
+
+Cadence-MQ is backend agnostic, meaning that you can use it with any database or storage system, and switch between them easily as you need to.
+
+We support the following backends:
+
+- [x] In-memory
+- [x] LibSQL (SQLite file, in-process, or remote server)
+- [ ] Redis
+- [ ] MongoDB
+- [ ] More?
+
+## Greater developer experience
+
+Having the possibility to swap between backends easily is a huge plus when developing
+
+- **No need to setup an external database**: you can use a local SQLite database when developing, thus not having to setup an external backend locally like a Redis docker container.
+- **Automated testing**: it ease the creation of complete test suites for your application, as you can use the in-memory driver to test your application without having to setup an external backend and handle the concurrency issues.

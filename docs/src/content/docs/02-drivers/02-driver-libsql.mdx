@@ -1,0 +1,68 @@
+---
+title: LibSQL driver
+description: The LibSQL driver is a driver that stores jobs in either a local SQLite file, in-process or a remote server.
+slug: drivers/libsql-driver
+sidebar:
+  order: 2
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import { Code } from '@astrojs/starlight/components';
+import { Aside } from '@astrojs/starlight/components';
+
+[LibSQL](https://github.com/tursodatabase/libsql) is a fork of SQLite that is both Open Source, and Open Contributions. It fully compatible with SQLite (either file-based or in-process), but also supports remote LibSQL servers (like [Turso](https://turso.tech/)) for remote and distributed SQLite access.
+
+## Installation
+
+The LibSQL driver can be installed with the `@cadence-mq/driver-libsql` package, and the `@libsql/client` package is required to connect to the database.
+
+<Tabs>
+  <TabItem label="pnpm">
+    ```bash frame=none
+    pnpm add @cadence-mq/core @cadence-mq/driver-libsql @libsql/client
+    ```
+  </TabItem>
+  <TabItem label="npm">
+    ```bash frame=none
+    npm install @cadence-mq/core @cadence-mq/driver-libsql @libsql/client
+    ```
+  </TabItem>
+  <TabItem label="bun">
+    ```bash frame=none
+    bun add @cadence-mq/core @cadence-mq/driver-libsql @libsql/client
+    ```
+  </TabItem>
+  <TabItem label="yarn">
+    ```bash frame=none
+    yarn add @cadence-mq/core @cadence-mq/driver-libsql @libsql/client
+    ```
+  </TabItem>
+</Tabs>
+
+## Local SQLite file example
+
+Here is a simple example of how to use the LibSQL driver to store jobs in a local SQLite file.
+
+import libSqlDemoLocalFile from '/../demos/libsql-local-file/index.ts?raw';
+
+<Code lang="ts" code={libSqlDemoLocalFile} title="index.ts" collapse="11-100" />
+
+## Remote LibSQL server example
+
+Here is a simple example of how to use the LibSQL driver to store jobs in a remote LibSQL server.
+
+import libSqlDemoRemoteServer from '/../demos/libsql-remote-server/index.ts?raw';
+
+<Code lang="ts" code={libSqlDemoRemoteServer} title="index.ts" collapse="14-100" />
+
+## In-process example
+
+Here is a simple example of how to use the LibSQL driver to store jobs in-process, this is useful for testing and development. For a lower overhead, you can use the [in-memory driver](/drivers/memory-driver) instead.
+
+import libSqlDemoMemory from '/../demos/libsql-memory/index.ts?raw';
+
+<Code lang="ts" code={libSqlDemoMemory} title="index.ts" collapse="9-100" />
+
+<Aside type="note">
+  As for the [in-memory driver](/drivers/memory-driver), using the LibSQL driver with an `:memory:` comes with some limitations: no persistence, no distributed support, and memory consumption, more details in the [in-memory driver](/drivers/memory-driver#limitations) documentation.
+</Aside>
