@@ -1,0 +1,163 @@
+---
+title: Schema validation
+description: You can validate the data of a job using a schema library like Valibot or Zod, or any Standard-Schema compliant library
+slug: guides/schema-validation
+sidebar:
+  order: 3
+---
+
+This guide will show you how to validate job data using schema validation libraries. Cadence MQ supports any library that implements the [Standard Schema specification](https://github.com/standard-schema/standard-schema), including popular libraries like [Zod](https://zod.dev/), [Valibot](https://valibot.dev/), and [ArkType](https://arktype.io/).
+
+## Why use schema validation?
+
+Schema validation is **optional** but highly recommended. It ensures that your job data is properly typed and validated before scheduling a job. This helps catch errors early and provides better type safety throughout your application.
+
+If you don't provide a schema, the job data will be of type `unknown` and no validation will be performed.
+
+## Using Valibot
+
+[Valibot](https://valibot.dev/) is a lightweight schema validation library.
+
+```ts title="index.ts" collapse={1-6} ins={11-17}
+import { createCadence } from '@cadence-mq/core';
+import { createMemoryDriver } from '@cadence-mq/driver-memory';
+import * as v from 'valibot';
+
+const driver = createMemoryDriver();
+const cadence = createCadence({ driver });
+
+// Register a task with Valibot schema validation
+cadence.registerTask({
+  taskName: 'process-order',
+  schema: {
+    data: v.object({
+      orderId: v.pipe(v.string(), v.uuid()),
+      amount: v.pipe(v.number(), v.minValue(0)),
+      itemsIds: v.array(v.string()),
+    }),
+  },
+  handler: async ({ data }) => {
+    console.log(`Processing order ${data.orderId} for $${data.amount}`);
+  },
+});
+
+// Schedule a job with validated data
+await cadence.scheduleJob({
+  taskName: 'process-order',
+  data: {
+    orderId: 'order-123',
+    amount: 99.99,
+    items: ['item1', 'item2'],
+  },
+});
+```
+
+## Using Zod
+
+[Zod](https://zod.dev/) is a TypeScript-first schema declaration and validation library.
+
+```ts title="index.ts" collapse={1-6} ins={11-17}
+import { createCadence } from '@cadence-mq/core';
+import { createMemoryDriver } from '@cadence-mq/driver-memory';
+import * as z from 'zod';
+
+const driver = createMemoryDriver();
+const cadence = createCadence({ driver });
+
+// Register a task with Zod schema validation
+cadence.registerTask({
+  taskName: 'send-welcome-email',
+  schema: {
+    data: z.object({
+      email: z.string().email(),
+      name: z.string().optional().default('User'),
+      userId: z.number().int().positive(),
+    }),
+  },
+  handler: async ({ data }) => {
+    // data is now strongly typed based on the schema
+    console.log(`Sending welcome email to ${data.name} at ${data.email}`);
+  },
+});
+
+// This will throw a validation error if the data does not match the schema
+await cadence.scheduleJob({
+  taskName: 'send-welcome-email',
+  data: {
+    email: 'user@example.com',
+    userId: 123,
+    // name is optional and will default to 'User'
+  },
+});
+```
+
+
+
+
+## Error handling
+
+When you schedule a job with invalid data, Cadence MQ will throw a validation error:
+
+```ts title="index.ts" collapse={1-19}
+import { createCadence } from '@cadence-mq/core';
+import { createMemoryDriver } from '@cadence-mq/driver-memory';
+import * as z from 'zod';
+
+const driver = createMemoryDriver();
+const cadence = createCadence({ driver });
+
+cadence.registerTask({
+  taskName: 'greet',
+  schema: {
+    data: z.object({
+      email: z.string().email(),
+      name: z.string().optional().default('Ahsoka Tano'),
+    }),
+  },
+  handler: async ({ data }) => {
+    console.log(`Greeting ${data.name} with email ${data.email}`);
+  },
+});
+
+try {
+  // This will throw a validation error
+  await cadence.scheduleJob({
+    taskName: 'greet',
+    data: {
+      email: 'invalid-email', // Invalid email format
+    },
+  });
+} catch (error) {
+  console.error('Validation error:', error.message);
+  // Output: Validation error: Invalid email
+}
+```
+
+## Type safety
+
+When you define a schema for your task, the `handler` function becomes strongly typed, if no schema is provided, the `data` parameter will be of type `unknown`.
+
+
+## Supported libraries
+
+Cadence MQ supports any validation library that implements the [Standard Schema specification](https://github.com/standard-schema/standard-schema). See the [supported libraries](https://github.com/standard-schema/standard-schema#what-schema-libraries-implement-the-spec) section for a list of libraries that are known to be compatible.
+
+## Best practices
+
+1. **Provide meaningful defaults**: Use optional fields with defaults to make your schemas more flexible.
+2. **Use specific validation rules**: Instead of generic string validation, use specific validators like `email()`, `url()`, or `uuid()`.
+3. **Handle validation errors gracefully**: Always wrap job scheduling in try-catch blocks when dealing with user input.
+4. **Keep schemas in sync**: When you update a task's schema, make sure to update all code that schedules jobs for that task.
+
+## Schema structure
+
+The schema object should have a `data` property that contains your validation schema:
+
+```ts
+schema: {
+  data: yourValidationSchema, // Any Standard Schema compliant library
+}
+```
+
+The `data` property is required and represents the job data that will be passed to your task handler.
+
