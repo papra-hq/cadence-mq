@@ -21,6 +21,7 @@
 
 - [x] Job scheduling
 - [x] Retry mechanism
+- [x] Periodic jobs
 - [ ] Job status tracking
 - [ ] UI for monitoring and managing jobs
 - [ ] Unique key for jobs

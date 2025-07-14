@@ -9,3 +9,8 @@ export const createJobNotFoundError = createErrorFactory({
   code: 'jobs.not-found',
   message: 'Job not found',
 });
+
+export const createInvalidCronExpressionError = createErrorFactory({
+  code: 'jobs.invalid-cron-expression',
+  message: 'Invalid cron expression',
+});

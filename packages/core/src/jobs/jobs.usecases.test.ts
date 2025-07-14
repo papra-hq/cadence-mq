@@ -107,5 +107,16 @@ describe('jobs usecases', () => {
 
       expect(attempts).eql(2);
     });
+
+    test('when the handler returns void, the result is coerced to undefined', async () => {
+      const taskDefinition: TaskDefinition = {
+        taskName: 'test-task-name',
+        handler: async () => {},
+      };
+
+      const result = await processJob({ job, taskDefinition, taskExecutionContext });
+
+      expect(result).eql(undefined);
+    });
   });
 });

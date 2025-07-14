@@ -42,6 +42,7 @@ export const testGettingJobs: TestSuite = ({ createDriver }) => {
           startedAt: undefined,
           maxRetries: undefined,
           result: undefined,
+          cron: undefined,
         },
       });
 
