@@ -1,0 +1,140 @@
+---
+title: Periodic jobs
+description: Schedule jobs to run at regular intervals using cron expressions
+slug: guides/periodic-jobs
+sidebar:
+  order: 3
+---
+
+This guide will show you how to schedule jobs to run at regular intervals using cron expressions.
+
+## Schedule a periodic job
+
+You can schedule a job to run periodically using the `schedulePeriodicJob` method with a cron expression:
+
+```ts title="index.ts" collapse={1-5}
+import { createCadence } from '@cadence-mq/core';
+import { createMemoryDriver } from '@cadence-mq/driver-memory';
+
+const driver = createMemoryDriver();
+const cadence = createCadence({ driver });
+
+cadence.registerTask({
+  taskName: 'send-daily-report',
+  handler: async () => {
+    console.log('Sending daily report');
+  },
+});
+
+await cadence.schedulePeriodicJob({
+  // The scheduleId is used to identify the job and update it if it already exists,
+  // it must be unique for each periodic job
+  scheduleId: 'daily-report',
+  // Every day at 9:00 AM
+  cron: '0 9 * * *', 
+  taskName: 'send-daily-report',
+});
+```
+
+## Cron expression format
+
+Cadence MQ uses standard cron expressions with the following format:
+
+```
+*   *   *   *   *   *
+┬   ┬   ┬   ┬   ┬   ┬
+│   │   │   │   │   │
+│   │   │   │   │   └─── day of week (0-7, 1L-7L) (0 or 7 is Sun)
+│   │   │   │   └─────── month (1-12, JAN-DEC)
+│   │   │   └─────────── day of month (1-31, L)
+│   │   └─────────────── hour (0-23)
+│   └─────────────────── minute (0-59)
+└─────────────────────── second (0-59, optional)
+```
+
+Here are some examples of common cron expressions:
+
+- `0 9 * * *`: Every day at 9:00 AM
+- `0 9 * * 1`: Every Monday at 9:00 AM
+- `0 9 * * 1-5`: Every weekday at 9:00 AM
+
+CadenceMQ uses the [`cron-parser`](https://www.npmjs.com/package/cron-parser) library in strict mode to parse the cron expression and calculate the next execution date.
+
+
+## Run immediately with periodic scheduling
+
+You can make a periodic job run immediately by setting the `immediate` option to `true`:
+
+```ts title="index.ts" collapse={1-12} ins={21}
+import { createCadence } from '@cadence-mq/core';
+import { createMemoryDriver } from '@cadence-mq/driver-memory';
+
+const driver = createMemoryDriver();
+const cadence = createCadence({ driver });
+
+cadence.registerTask({
+  taskName: 'send-welcome-email',
+  handler: async ({ data }) => {
+    console.log(`Sending welcome email to ${data.email}`);
+  },
+});
+
+await cadence.schedulePeriodicJob({
+  scheduleId: 'welcome-email',
+  cron: '0 9 * * *', // Every day at 9:00 AM
+  taskName: 'send-welcome-email',
+  data: {
+    email: 'user@example.com',
+  },
+  immediate: true, // Run immediately, then follow the cron schedule
+});
+```
+
+## Update existing periodic jobs
+
+You can update an existing periodic job by calling `schedulePeriodicJob` with the same `scheduleId`:
+
+```ts title="index.ts" collapse={1-12}
+import { createCadence } from '@cadence-mq/core';
+import { createMemoryDriver } from '@cadence-mq/driver-memory';
+
+const driver = createMemoryDriver();
+const cadence = createCadence({ driver });
+
+cadence.registerTask({
+  taskName: 'send-notification',
+  handler: async ({ data }) => {
+    console.log(`Sending notification to ${data.email}`);
+  },
+});
+
+// Create a periodic job
+await cadence.schedulePeriodicJob({
+  scheduleId: 'notification-job',
+  cron: '0 9 * * *', // Every day at 9:00 AM
+  taskName: 'send-notification',
+  data: {
+    email: 'user@example.com',
+  },
+});
+
+// Later, update the same job with different data
+await cadence.schedulePeriodicJob({
+  scheduleId: 'notification-job', // Same scheduleId
+  cron: '0 9 * * *',
+  taskName: 'send-notification',
+  data: {
+    email: 'newuser@example.com', // Updated data
+  },
+});
+```
+
+## Important notes
+
+- **Unique scheduleId**: Each periodic job must have a unique `scheduleId`. This ID is used to identify and update the job.
+- **Cron validation**: Invalid cron expressions will cause the job scheduling to fail.
+- **Timezone**: Jobs are scheduled based on the system timezone of the worker process. Make sure your workers run in the correct timezone.
+- **Automatic rescheduling**: After a periodic job completes, it is automatically rescheduled for the next occurrence based on the cron expression.
+- **Error handling**: If a periodic job fails, it will be rescheduled for the next occurrence. It doesn't stop the periodic execution.
+- **Worker requirement**: Periodic jobs require a worker to be running to execute. Make sure you have workers started in your application.
+

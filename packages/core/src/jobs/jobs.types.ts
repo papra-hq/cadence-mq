@@ -1,3 +1,5 @@
+import type { Expand } from '@corentinth/chisels';
+
 type JsonSerializable = string | number | boolean | null | undefined | JsonSerializable[] | { [key: string]: JsonSerializable };
 
 export type JobData = JsonSerializable;
@@ -15,12 +17,17 @@ export type Job = {
   data?: JobData;
   result?: JobResult;
   scheduledAt: Date;
+  cron?: string;
 };
 
+export type JobUpdate = Expand<Partial<Pick<Job, 'status' | 'error' | 'result' | 'startedAt' | 'completedAt' | 'maxRetries' | 'data' | 'cron' | 'scheduledAt'>>>;
+
 export type JobRepositoryDriver = {
-  saveJob: (arg: { job: Job; getNow?: () => Date }) => Promise<void>;
-  getNextJobAndMarkAsProcessing: (arg: { abortSignal: AbortSignal; getNow?: () => Date }) => Promise<{ job: Job }>;
-  markJobAsCompleted: (arg: { jobId: string; getNow?: () => Date; result?: JobResult }) => Promise<void>;
-  markJobAsFailed: (arg: { jobId: string; getNow?: () => Date; error: string }) => Promise<void>;
+  saveJob: (arg: { job: Job; now?: Date }) => Promise<void>;
+  updateJob: (arg: { jobId: string; values: JobUpdate; now?: Date }) => Promise<void>;
+  getNextJobAndMarkAsProcessing: (arg: { abortSignal: AbortSignal; now?: Date }) => Promise<{ job: Job }>;
+  markJobAsCompleted: (arg: { jobId: string; now?: Date; result?: JobResult }) => Promise<void>;
+  markJobAsFailed: (arg: { jobId: string; now?: Date; error: string }) => Promise<void>;
   getJob: (arg: { jobId: string }) => Promise<{ job: Job | null }>;
+  getJobCount: (arg?: { filter?: { status?: JobStatus } }) => Promise<{ count: number }>;
 };

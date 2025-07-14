@@ -6,8 +6,8 @@
     "changeset": "changeset",
     "changeset:version": "pnpm changeset version && pnpm install --no-frozen-lockfile",
     "changeset:publish": "pnpm changeset publish",
-    "test": "vitest run",
-    "test:watch": "vitest --watch"
+    "test": "TZ=UTC vitest run",
+    "test:watch": "TZ=UTC vitest watch"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.1",

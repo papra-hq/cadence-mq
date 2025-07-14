@@ -8,7 +8,7 @@ import { createLibSqlDriver } from './driver';
 import { setupSchema } from './migrations';
 
 const TEST_DB_ROOT = path.join(os.tmpdir(), 'cadence-mq-tests-driver-libsql');
-const POLL_INTERVAL_MS = 50;
+const POLL_INTERVAL_MS = 1_000;
 
 describe('libsql driver', () => {
   describe('with a file-based libsql database', () => {

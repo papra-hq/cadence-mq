@@ -19,6 +19,7 @@ export type {
   JobData,
   JobRepositoryDriver,
   JobStatus,
+  JobUpdate,
 } from './jobs/jobs.types';
 
 export {

@@ -64,32 +64,32 @@ export function createMemoryDriver(): JobRepositoryDriver {
   };
 
   return {
-    getNextJobAndMarkAsProcessing: async ({ getNow = () => new Date() }) => {
+    getNextJobAndMarkAsProcessing: async ({ now = new Date() }) => {
       const { promise, resolve } = Promise.withResolvers<{ job: Job }>();
 
       pendingResolvers.push(resolve);
 
-      refreshConsumption({ processingTimeoutMs: 15_000, getNow }); // TODO: make this configurable
+      refreshConsumption({ processingTimeoutMs: 15_000 }); // TODO: make this configurable
 
       const { job } = await promise;
 
       jobsRegistry.set(job.id, {
         ...job,
         status: 'processing',
-        startedAt: getNow(),
+        startedAt: now,
       });
 
       return { job };
     },
-    saveJob: async ({ job, getNow = () => new Date() }) => {
+    saveJob: async ({ job }) => {
       if (jobsRegistry.has(job.id)) {
         throw createJobWithSameIdExistsError();
       }
 
       jobsRegistry.set(job.id, job);
-      refreshConsumption({ processingTimeoutMs: 15000, getNow });
+      refreshConsumption({ processingTimeoutMs: 15000 });
     },
-    markJobAsCompleted: async ({ jobId, getNow = () => new Date(), result }) => {
+    markJobAsCompleted: async ({ jobId, now = new Date(), result }) => {
       const job = jobsRegistry.get(jobId);
 
       if (!job) {
@@ -99,7 +99,7 @@ export function createMemoryDriver(): JobRepositoryDriver {
       jobsRegistry.set(jobId, {
         ...job,
         status: 'completed',
-        completedAt: getNow(),
+        completedAt: now,
         result,
       });
     },
@@ -126,10 +126,31 @@ export function createMemoryDriver(): JobRepositoryDriver {
               error: undefined,
               startedAt: undefined,
               completedAt: undefined,
+              cron: undefined,
               ...job,
             }
           : null,
       };
+    },
+    getJobCount: async ({ filter } = {}) => {
+      if (!filter) {
+        return { count: jobsRegistry.size };
+      }
+
+      const filterEntries = Object.entries(filter);
+
+      const filteredJobs = Array.from(jobsRegistry.values()).filter(job => filterEntries.every(([key, value]) => job[key as keyof Job] === value));
+
+      return { count: filteredJobs.length };
+    },
+    updateJob: async ({ jobId, values }) => {
+      const existingJob = jobsRegistry.get(jobId);
+
+      if (!existingJob) {
+        throw createJobNotFoundError();
+      }
+
+      jobsRegistry.set(jobId, { ...existingJob, ...values });
     },
   };
 }

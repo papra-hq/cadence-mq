@@ -14,8 +14,10 @@ describe('cadence factory', () => {
       expect(methods).to.eql([
         'createWorker',
         'scheduleJob',
+        'schedulePeriodicJob',
         'registerTask',
         'getJob',
+        'getJobCount',
         'getTaskRegistry',
         'getDriver',
       ]);

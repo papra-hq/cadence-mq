@@ -1,6 +1,6 @@
 import type { JobRepositoryDriver } from '../jobs/jobs.types';
 import type { TaskDefinitionRegistry } from '../tasks/task-definition.registry';
-import { createScheduler } from '../scheduler/scheduler';
+import { createPeriodicJobScheduler, createScheduler } from '../scheduler/scheduler';
 import { createTaskRegistry } from '../tasks/task-definition.registry';
 import { createWorkerFactory } from '../workers/workers.factory';
 
@@ -20,9 +20,11 @@ export function createCadence({
   return {
     createWorker: createWorkerFactory({ driver, taskRegistry }),
     scheduleJob: createScheduler({ driver, taskRegistry, generateJobId }),
+    schedulePeriodicJob: createPeriodicJobScheduler({ driver, taskRegistry }),
 
     registerTask: taskRegistry.registerTask,
     getJob: driver.getJob,
+    getJobCount: driver.getJobCount,
 
     getTaskRegistry: () => taskRegistry,
     getDriver: () => driver,
