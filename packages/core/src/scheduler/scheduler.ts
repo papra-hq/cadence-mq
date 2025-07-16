@@ -15,7 +15,7 @@ export async function scheduleJob({
   generateJobId = createId,
 }: {
   taskName: string;
-  data: JobData;
+  data?: JobData;
   scheduledAt?: Date;
   now?: Date;
   maxRetries?: number;

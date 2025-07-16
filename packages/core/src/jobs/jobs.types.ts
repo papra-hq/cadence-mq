@@ -1,6 +1,6 @@
 import type { Expand } from '@corentinth/chisels';
 
-type JsonSerializable = string | number | boolean | null | undefined | JsonSerializable[] | { [key: string]: JsonSerializable };
+export type JsonSerializable = string | number | boolean | null | undefined | JsonSerializable[] | { [key: string]: JsonSerializable };
 
 export type JobData = JsonSerializable;
 export type JobResult = JsonSerializable;
@@ -26,8 +26,6 @@ export type JobRepositoryDriver = {
   saveJob: (arg: { job: Job; now?: Date }) => Promise<void>;
   updateJob: (arg: { jobId: string; values: JobUpdate; now?: Date }) => Promise<void>;
   getNextJobAndMarkAsProcessing: (arg: { abortSignal: AbortSignal; now?: Date }) => Promise<{ job: Job }>;
-  markJobAsCompleted: (arg: { jobId: string; now?: Date; result?: JobResult }) => Promise<void>;
-  markJobAsFailed: (arg: { jobId: string; now?: Date; error: string }) => Promise<void>;
   getJob: (arg: { jobId: string }) => Promise<{ job: Job | null }>;
   getJobCount: (arg?: { filter?: { status?: JobStatus } }) => Promise<{ count: number }>;
 };

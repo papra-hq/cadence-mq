@@ -1,14 +1,11 @@
 import type { Job, JobRepositoryDriver } from '@cadence-mq/core';
 import { createJobNotFoundError, createJobWithSameIdExistsError } from './errors';
 
-function getNextJob({ jobsRegistry, processingExpiresAt }: { jobsRegistry: Map<string, Job>; processingExpiresAt: Date }) {
+function getNextJob({ jobsRegistry, processingTimeoutMs, now = new Date() }: { jobsRegistry: Map<string, Job>; processingTimeoutMs: number; now?: Date }) {
   let nextJob: Job | null = null;
 
-  const isJobSelectable = (job: Job) => job.status === 'pending' || (job.status === 'processing');
-  const isJobScheduledEarlier = (job: Job) =>
-    nextJob === null
-    || (job.status === 'pending' && job.scheduledAt < nextJob.scheduledAt)
-    || (job.status === 'processing' && job.startedAt && job.startedAt < processingExpiresAt);
+  const isJobSelectable = (job: Job) => job.status === 'pending' || (job.status === 'processing' && job.startedAt && job.startedAt.getTime() + processingTimeoutMs < now.getTime());
+  const isJobScheduledEarlier = (job: Job) => nextJob === null || (job.scheduledAt < nextJob.scheduledAt);
 
   for (const job of jobsRegistry.values()) {
     if (isJobSelectable(job) && isJobScheduledEarlier(job)) {
@@ -36,8 +33,8 @@ export function createMemoryDriver(): JobRepositoryDriver {
 
   const refreshConsumption = ({ processingTimeoutMs, getNow = () => new Date() }: { processingTimeoutMs: number; getNow?: () => Date }) => {
     const now = getNow();
-    const processingExpiresAt = new Date(now.getTime() - processingTimeoutMs);
-    const nextJob = getNextJob({ jobsRegistry, processingExpiresAt });
+    const nextJob = getNextJob({ jobsRegistry, processingTimeoutMs, now });
+    const nextJobProcessingExpiresAt = nextJob?.startedAt ? new Date(nextJob.startedAt.getTime() + processingTimeoutMs) : undefined;
 
     if (nextJobTimeout) {
       clearTimeout(nextJobTimeout);
@@ -47,7 +44,7 @@ export function createMemoryDriver(): JobRepositoryDriver {
       return;
     }
 
-    const availableAt = nextJob.status === 'pending' ? nextJob.scheduledAt : processingExpiresAt;
+    const availableAt = nextJob.status === 'processing' ? nextJobProcessingExpiresAt! : nextJob.scheduledAt;
     const deltaMs = availableAt.getTime() - now.getTime();
 
     if (deltaMs <= 0) {
@@ -69,7 +66,7 @@ export function createMemoryDriver(): JobRepositoryDriver {
 
       pendingResolvers.push(resolve);
 
-      refreshConsumption({ processingTimeoutMs: 15_000 }); // TODO: make this configurable
+      refreshConsumption({ processingTimeoutMs: 10 * 60 * 1000 }); // TODO: make this configurable
 
       const { job } = await promise;
 
@@ -87,34 +84,7 @@ export function createMemoryDriver(): JobRepositoryDriver {
       }
 
       jobsRegistry.set(job.id, job);
-      refreshConsumption({ processingTimeoutMs: 15000 });
-    },
-    markJobAsCompleted: async ({ jobId, now = new Date(), result }) => {
-      const job = jobsRegistry.get(jobId);
-
-      if (!job) {
-        throw createJobNotFoundError();
-      }
-
-      jobsRegistry.set(jobId, {
-        ...job,
-        status: 'completed',
-        completedAt: now,
-        result,
-      });
-    },
-    markJobAsFailed: async ({ jobId, error }) => {
-      const job = jobsRegistry.get(jobId);
-
-      if (!job) {
-        throw createJobNotFoundError();
-      }
-
-      jobsRegistry.set(jobId, {
-        ...job,
-        status: 'failed',
-        error,
-      });
+      refreshConsumption({ processingTimeoutMs: 10 * 60 * 1000 });
     },
     getJob: async ({ jobId }) => {
       const job = jobsRegistry.get(jobId) ?? null;

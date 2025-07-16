@@ -1,16 +1,16 @@
 {
-  "name": "@cadence-mq/driver-memory",
+  "name": "@cadence-mq/driver-kysely",
   "type": "module",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "packageManager": "pnpm@10.10.0",
-  "description": "Memory driver for CadenceMQ",
+  "description": "Generic SQL driver for CadenceMQ based on Kysely query builder",
   "author": "Corentin Thomasset <corentinth@proton.me> (https://corentin.tech)",
   "license": "MIT",
-  "homepage": "https://github.com/papra-hq/cadence-mq/tree/main/packages/driver-memory",
+  "homepage": "https://github.com/papra-hq/cadence-mq/tree/main/packages/driver-kysely",
   "repository": {
     "type": "git",
     "url": "https://github.com/papra-hq/cadence-mq",
-    "directory": "packages/driver-memory"
+    "directory": "packages/driver-kysely"
   },
   "bugs": {
     "url": "https://github.com/papra-hq/cadence-mq/issues"
@@ -18,7 +18,12 @@
   "keywords": [
     "cadence",
     "cadence-mq",
-    "memory",
+    "kysely",
+    "sql",
+    "postgres",
+    "mysql",
+    "sqlite",
+    "dialect",
     "job-scheduler",
     "job-queue",
     "task-queue",
@@ -43,16 +48,28 @@
     "prepublishOnly": "pnpm build"
   },
   "peerDependencies": {
-    "@cadence-mq/core": "workspace:^"
+    "@cadence-mq/core": "workspace:^",
+    "@libsql/client": "^0.15.9"
+  },
+  "dependencies": {
+    "kysely": "^0.28.2"
   },
   "devDependencies": {
     "@antfu/eslint-config": "catalog:",
     "@cadence-mq/test-suites": "workspace:*",
     "@types/node": "catalog:",
     "@vitest/coverage-v8": "catalog:",
+    "better-sqlite3": "^12.2.0",
     "eslint": "catalog:",
     "tsdown": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": "./dist/index.js",
+      "./migrations/migrations": "./dist/migrations/migrations.js",
+      "./package.json": "./package.json"
+    }
   }
 }

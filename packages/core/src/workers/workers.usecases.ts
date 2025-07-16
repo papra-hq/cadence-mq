@@ -57,12 +57,12 @@ async function consumeJob({
   }
 
   if (error) {
-    await driver.markJobAsFailed({ jobId, error: serializeError({ error }), now });
+    await driver.updateJob({ jobId, values: { error: serializeError({ error }), status: 'failed', completedAt: now }, now });
     eventEmitter.emit('job.failed', { jobId, error });
     return;
   }
 
-  await driver.markJobAsCompleted({ jobId, result, now });
+  await driver.updateJob({ jobId, values: { result, status: 'completed', completedAt: now }, now });
   eventEmitter.emit('job.completed', { jobId, result });
 }
 

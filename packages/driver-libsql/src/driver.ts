@@ -67,18 +67,6 @@ export function createLibSqlDriver({ client, pollIntervalMs = DEFAULT_POLL_INTER
         args: [job.id, job.taskName, job.status, now, job.maxRetries ?? null, JSON.stringify(job.data), job.scheduledAt, job.cron ?? null],
       }], 'write');
     },
-    markJobAsCompleted: async ({ jobId, now = new Date(), result }) => {
-      await client.batch([{
-        sql: 'UPDATE jobs SET status = \'completed\', completed_at = ?, result = ? WHERE id = ?',
-        args: [now, result ? JSON.stringify(result) : null, jobId],
-      }]);
-    },
-    markJobAsFailed: async ({ jobId, error }) => {
-      await client.batch([{
-        sql: 'UPDATE jobs SET status = ?, error = ? WHERE id = ?',
-        args: ['failed', error, jobId],
-      }]);
-    },
     getJob: async ({ jobId }) => {
       const { rows } = await client.execute({
         sql: 'SELECT * FROM jobs WHERE id = ?',

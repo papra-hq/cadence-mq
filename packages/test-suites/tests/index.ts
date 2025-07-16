@@ -15,6 +15,7 @@ const suites = {
   testMultipleWorkers,
   testJobCount,
   testPeriodicTasks,
+  // testHangingJobs,
 };
 
 export function runTestSuites({ exclude = [], ...args }: (TestSuiteArgs & { exclude?: (keyof typeof suites)[] })) {
