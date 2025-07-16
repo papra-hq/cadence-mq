@@ -20,6 +20,7 @@ export type {
   JobRepositoryDriver,
   JobStatus,
   JobUpdate,
+  JsonSerializable,
 } from './jobs/jobs.types';
 
 export {
