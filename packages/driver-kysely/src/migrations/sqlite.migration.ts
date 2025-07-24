@@ -17,6 +17,7 @@ export async function up(db: DatabaseClient): Promise<void> {
     .addColumn('max_retries', 'integer')
     .addColumn('scheduled_at', 'datetime', col => col.notNull())
     .addColumn('cron', 'text')
+    .addColumn('created_at', 'datetime', col => col.notNull())
     .execute();
 
   await db.schema

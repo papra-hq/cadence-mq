@@ -1,0 +1,60 @@
+{
+  "name": "@cadence-mq/driver-drizzle",
+  "type": "module",
+  "version": "0.0.0",
+  "packageManager": "pnpm@10.10.0",
+  "description": "Drizzle driver for CadenceMQ",
+  "author": "Corentin Thomasset <corentinth@proton.me> (https://corentin.tech)",
+  "license": "MIT",
+  "homepage": "https://github.com/papra-hq/cadence-mq/tree/main/packages/driver-drizzle",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/papra-hq/cadence-mq",
+    "directory": "packages/driver-drizzle"
+  },
+  "bugs": {
+    "url": "https://github.com/papra-hq/cadence-mq/issues"
+  },
+  "keywords": [
+    "cadence",
+    "cadence-mq",
+    "drizzle",
+    "job-scheduler",
+    "job-queue",
+    "task-queue",
+    "tasks",
+    "jobs"
+  ],
+  "exports": {
+    ".": "./dist/index.js",
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsdown",
+    "build:watch": "tsdown --watch",
+    "dev": "pnpm build:watch",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "test": "vitest run",
+    "test:watch": "vitest watch",
+    "prepublishOnly": "pnpm build"
+  },
+  "peerDependencies": {
+    "@cadence-mq/core": "workspace:^",
+    "drizzle-orm": "^0.44.3"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "catalog:",
+    "@cadence-mq/test-suites": "workspace:*",
+    "@libsql/client": "^0.15.9",
+    "@types/node": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
+    "eslint": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

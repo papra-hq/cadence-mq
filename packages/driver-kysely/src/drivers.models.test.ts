@@ -17,6 +17,7 @@ describe('drivers models', () => {
           result: undefined,
           error: undefined,
           cron: '0 0 * * *',
+          created_at: '2025-01-01T00:00:00.000Z',
         }),
       ).to.eql({
         id: '123',
@@ -30,6 +31,7 @@ describe('drivers models', () => {
         result: undefined,
         error: undefined,
         cron: '0 0 * * *',
+        createdAt: new Date('2025-01-01T00:00:00.000Z'),
       });
     });
   });

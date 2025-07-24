@@ -8,7 +8,9 @@
     "changeset:publish": "pnpm changeset publish",
     "test": "TZ=UTC vitest run",
     "test:watch": "TZ=UTC vitest watch",
-    "dev": "pnpm -r --parallel -F './packages/*' build:watch"
+    "dev": "pnpm build:watch",
+    "build": "pnpm -r --parallel -F './packages/*' build",
+    "build:watch": "pnpm -r --parallel -F './packages/*' build:watch"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.1",

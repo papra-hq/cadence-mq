@@ -32,6 +32,7 @@ export async function scheduleJob({
     scheduledAt,
     status: 'pending',
     maxRetries,
+    createdAt: now,
   };
 
   await driver.saveJob({ job, now });
@@ -73,6 +74,7 @@ export async function schedulePeriodicJob({
     status: 'pending',
     maxRetries,
     cron,
+    createdAt: now,
   };
 
   if (existingJob) {
