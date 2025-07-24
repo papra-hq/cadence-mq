@@ -44,6 +44,7 @@ function toJob(row: Row): Job {
     error: row.error ? String(row.error) : undefined,
     cron: row.cron ? String(row.cron) : undefined,
     scheduledAt: new Date(row.scheduled_at as unknown as string),
+    createdAt: new Date(row.created_at as unknown as string),
   };
 }
 
@@ -61,10 +62,10 @@ export function createLibSqlDriver({ client, pollIntervalMs = DEFAULT_POLL_INTER
         return { job };
       }
     },
-    saveJob: async ({ job, now = new Date() }) => {
+    saveJob: async ({ job }) => {
       await client.batch([{
         sql: 'INSERT INTO jobs (id, task_name, status, created_at, max_retries, data, scheduled_at, cron) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        args: [job.id, job.taskName, job.status, now, job.maxRetries ?? null, JSON.stringify(job.data), job.scheduledAt, job.cron ?? null],
+        args: [job.id, job.taskName, job.status, job.createdAt, job.maxRetries ?? null, JSON.stringify(job.data), job.scheduledAt, job.cron ?? null],
       }], 'write');
     },
     getJob: async ({ jobId }) => {

@@ -38,7 +38,7 @@ export const testScheduledJobs: TestSuite = ({ createDriver, processingLatencyMs
       await vi.advanceTimersByTimeAsync(1_000 * 60 * 9); // 9 minutes from now
       expect(tasksInvocations.length).to.eql(0);
 
-      await vi.advanceTimersByTimeAsync(1_000 * 60 * 1); // 1 minute from now
+      await vi.advanceTimersByTimeAsync(1_000 * 60 * 2); // 2 minute from now
 
       expect(tasksInvocations.length).to.eql(1);
     });

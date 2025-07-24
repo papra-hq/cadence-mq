@@ -18,5 +18,6 @@ export function toJob(row: JobSelectable): Job {
     result: toJson(row.result),
     error: row.error ?? undefined,
     cron: row.cron ?? undefined,
+    createdAt: toDate(row.created_at),
   };
 }

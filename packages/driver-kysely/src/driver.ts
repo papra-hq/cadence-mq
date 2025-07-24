@@ -58,6 +58,7 @@ export function createSqlDriver({ client, pollIntervalMs = DEFAULT_POLL_INTERVAL
           scheduled_at: job.scheduledAt.toISOString(),
           cron: job.cron,
           max_retries: job.maxRetries,
+          created_at: job.createdAt.toISOString(),
         })
         .execute();
     },

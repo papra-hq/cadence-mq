@@ -18,6 +18,7 @@ export type Job = {
   result?: JobResult;
   scheduledAt: Date;
   cron?: string;
+  createdAt: Date;
 };
 
 export type JobUpdate = Expand<Partial<Pick<Job, 'status' | 'error' | 'result' | 'startedAt' | 'completedAt' | 'maxRetries' | 'data' | 'cron' | 'scheduledAt'>>>;

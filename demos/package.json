@@ -12,11 +12,13 @@
     "start:libsql-memory": "tsx libsql-memory/index.ts",
     "start:libsql-remote-server": "tsx libsql-remote-server/index.ts",
     "start:in-memory": "tsx in-memory/index.ts",
+    "start:drizzle-libsql-memory": "tsx drizzle-libsql-memory/index.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
   },
   "dependencies": {
     "@cadence-mq/core": "workspace:*",
+    "@cadence-mq/driver-drizzle": "workspace:*",
     "@cadence-mq/driver-libsql": "workspace:*",
     "@cadence-mq/driver-memory": "workspace:*",
     "@libsql/client": "^0.15.9",
@@ -26,6 +28,7 @@
   "devDependencies": {
     "@antfu/eslint-config": "catalog:",
     "@types/node": "catalog:",
+    "drizzle-orm": "^0.44.3",
     "eslint": "catalog:",
     "tsx": "^4.20.3",
     "typescript": "catalog:"
