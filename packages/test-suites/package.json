@@ -36,7 +36,7 @@
     "lint:fix": "eslint . --fix"
   },
   "peerDependencies": {
-    "@cadence-mq/core": "workspace:^"
+    "@cadence-mq/core": "workspace:^0.0.0"
   },
   "devDependencies": {
     "@antfu/eslint-config": "catalog:",
