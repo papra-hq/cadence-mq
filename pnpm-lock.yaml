@@ -171,7 +171,7 @@ importers:
   packages/driver-drizzle:
     dependencies:
       '@cadence-mq/core':
-        specifier: workspace:^0.0.0
+        specifier: workspace:^0.1.0
         version: link:../core
       drizzle-orm:
         specifier: ^0.44.3
@@ -208,7 +208,7 @@ importers:
   packages/driver-kysely:
     dependencies:
       '@cadence-mq/core':
-        specifier: workspace:^0.0.0
+        specifier: workspace:^0.1.0
         version: link:../core
       '@libsql/client':
         specifier: ^0.15.9
@@ -248,7 +248,7 @@ importers:
   packages/driver-libsql:
     dependencies:
       '@cadence-mq/core':
-        specifier: workspace:^0.0.0
+        specifier: workspace:^0.1.0
         version: link:../core
       '@libsql/client':
         specifier: ^0.15.9
@@ -282,7 +282,7 @@ importers:
   packages/driver-memory:
     dependencies:
       '@cadence-mq/core':
-        specifier: workspace:^0.0.0
+        specifier: workspace:^0.1.0
         version: link:../core
     devDependencies:
       '@antfu/eslint-config':
@@ -313,7 +313,7 @@ importers:
   packages/test-suites:
     dependencies:
       '@cadence-mq/core':
-        specifier: workspace:^0.0.0
+        specifier: workspace:^0.1.0
         version: link:../core
     devDependencies:
       '@antfu/eslint-config':
