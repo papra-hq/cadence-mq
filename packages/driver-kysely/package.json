@@ -48,7 +48,7 @@
     "prepublishOnly": "pnpm build"
   },
   "peerDependencies": {
-    "@cadence-mq/core": "workspace:^0.0.0",
+    "@cadence-mq/core": "workspace:^0.1.0",
     "@libsql/client": "^0.15.9"
   },
   "dependencies": {

@@ -1,7 +1,7 @@
 {
   "name": "@cadence-mq/driver-drizzle",
   "type": "module",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "packageManager": "pnpm@10.10.0",
   "description": "Drizzle driver for CadenceMQ",
   "author": "Corentin Thomasset <corentinth@proton.me> (https://corentin.tech)",
@@ -43,7 +43,7 @@
     "prepublishOnly": "pnpm build"
   },
   "peerDependencies": {
-    "@cadence-mq/core": "workspace:^0.0.0",
+    "@cadence-mq/core": "workspace:^0.1.0",
     "drizzle-orm": "^0.44.3"
   },
   "devDependencies": {
