@@ -19,9 +19,10 @@ export type Job = {
   scheduledAt: Date;
   cron?: string;
   createdAt: Date;
+  deleteJobOnCompletion: boolean;
 };
 
-export type JobUpdate = Expand<Partial<Pick<Job, 'status' | 'error' | 'result' | 'startedAt' | 'completedAt' | 'maxRetries' | 'data' | 'cron' | 'scheduledAt'>>>;
+export type JobUpdate = Expand<Partial<Pick<Job, 'status' | 'error' | 'result' | 'startedAt' | 'completedAt' | 'maxRetries' | 'data' | 'cron' | 'scheduledAt' | 'deleteJobOnCompletion'>>>;
 
 export type JobRepositoryDriver = {
   saveJob: (arg: { job: Job; now?: Date }) => Promise<void>;

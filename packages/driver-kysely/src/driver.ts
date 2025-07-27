@@ -60,6 +60,7 @@ export function createSqlDriver({ client, pollIntervalMs = DEFAULT_POLL_INTERVAL
           cron: job.cron,
           max_retries: job.maxRetries,
           created_at: job.createdAt.toISOString(),
+          delete_job_on_completion: job.deleteJobOnCompletion ? 1 : 0,
         })
         .execute();
     },
@@ -103,6 +104,7 @@ export function createSqlDriver({ client, pollIntervalMs = DEFAULT_POLL_INTERVAL
           ...(values.completedAt ? { completed_at: values.completedAt.toISOString() } : {}),
           ...(values.maxRetries ? { max_retries: values.maxRetries } : {}),
           ...(values.status ? { status: values.status } : {}),
+          ...(values.deleteJobOnCompletion !== undefined ? { delete_job_on_completion: values.deleteJobOnCompletion ? 1 : 0 } : {}),
         })
         .execute();
     },

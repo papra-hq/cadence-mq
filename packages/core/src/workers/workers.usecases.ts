@@ -64,6 +64,11 @@ async function consumeJob({
 
   await driver.updateJob({ jobId, values: { result, status: 'completed', completedAt: now }, now });
   eventEmitter.emit('job.completed', { jobId, result });
+
+  if (job.deleteJobOnCompletion && !job.cron) {
+    await driver.deleteJob({ jobId });
+    eventEmitter.emit('job.deleted', { jobId });
+  }
 }
 
 export function startConsumingJobs({

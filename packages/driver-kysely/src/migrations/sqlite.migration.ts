@@ -18,6 +18,7 @@ export async function up(db: DatabaseClient): Promise<void> {
     .addColumn('scheduled_at', 'datetime', col => col.notNull())
     .addColumn('cron', 'text')
     .addColumn('created_at', 'datetime', col => col.notNull())
+    .addColumn('delete_job_on_completion', 'integer', col => col.notNull().defaultTo(0))
     .execute();
 
   await db.schema

@@ -21,6 +21,7 @@ export const jobsTable = sqliteTable('jobs', {
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
   startedAt: integer('started_at', { mode: 'timestamp_ms' }),
   completedAt: integer('completed_at', { mode: 'timestamp_ms' }),
+  deleteJobOnCompletion: integer('delete_job_on_completion', { mode: 'boolean' }).notNull().default(false),
 });
 
 describe('drizzle driver', () => {

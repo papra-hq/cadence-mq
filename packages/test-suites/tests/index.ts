@@ -1,4 +1,5 @@
 import type { TestSuiteArgs } from './types';
+import { testDeleteJobOnCompletion } from './suites/delete-job-on-completion.test';
 import { testDeleteJobs } from './suites/delete-jobs.test';
 import { testFailingJobs } from './suites/failing-jobs.test';
 import { testGettingJobs } from './suites/getting-jobs.test';
@@ -17,6 +18,7 @@ const suites = {
   testJobCount,
   testPeriodicTasks,
   testDeleteJobs,
+  testDeleteJobOnCompletion,
   // testHangingJobs,
 };
 

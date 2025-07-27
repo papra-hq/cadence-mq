@@ -12,6 +12,7 @@ export function buildUpdateJobSetClause({ values }: { values: JobUpdate }): { se
     data: 'data',
     cron: 'cron',
     scheduledAt: 'scheduled_at',
+    deleteJobOnCompletion: 'delete_job_on_completion',
   };
 
   const fieldsKeys = Object.keys(fields);

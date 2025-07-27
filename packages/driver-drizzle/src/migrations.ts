@@ -18,7 +18,8 @@ CREATE TABLE IF NOT EXISTS jobs (
   data TEXT,
   result TEXT,
   scheduled_at DATETIME NOT NULL,
-  cron TEXT
+  cron TEXT,
+  delete_job_on_completion INTEGER DEFAULT 0
 );
 
 CREATE INDEX IF NOT EXISTS jobs_status_scheduled_at_started_at_idx ON jobs (status, scheduled_at, started_at);

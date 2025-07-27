@@ -35,6 +35,7 @@ describe('scheduler', () => {
           createdAt: new Date('2025-01-01'),
           status: 'pending',
           maxRetries: 0,
+          deleteJobOnCompletion: false,
         },
         now: new Date('2025-01-01'),
       }]);
@@ -72,6 +73,7 @@ describe('scheduler', () => {
           createdAt: new Date('2025-01-01'),
           status: 'pending',
           maxRetries: undefined,
+          deleteJobOnCompletion: false,
         },
         now: new Date('2025-01-01'),
       }]);

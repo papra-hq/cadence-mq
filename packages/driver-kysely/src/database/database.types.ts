@@ -19,6 +19,7 @@ export type JobTable = {
   max_retries?: number;
   cron?: string;
   created_at: string;
+  delete_job_on_completion?: number;
 };
 
 export type JobSelectable = Selectable<JobTable>;

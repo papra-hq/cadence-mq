@@ -46,6 +46,7 @@ function toJob(row: Row): Job {
     cron: row.cron ? String(row.cron) : undefined,
     scheduledAt: new Date(row.scheduled_at as unknown as string),
     createdAt: new Date(row.created_at as unknown as string),
+    deleteJobOnCompletion: Boolean(row.delete_job_on_completion),
   };
 }
 
@@ -65,8 +66,8 @@ export function createLibSqlDriver({ client, pollIntervalMs = DEFAULT_POLL_INTER
     },
     saveJob: async ({ job }) => {
       await client.batch([{
-        sql: 'INSERT INTO jobs (id, task_name, status, created_at, max_retries, data, scheduled_at, cron) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        args: [job.id, job.taskName, job.status, job.createdAt, job.maxRetries ?? null, JSON.stringify(job.data), job.scheduledAt, job.cron ?? null],
+        sql: 'INSERT INTO jobs (id, task_name, status, created_at, max_retries, data, scheduled_at, cron, delete_job_on_completion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        args: [job.id, job.taskName, job.status, job.createdAt, job.maxRetries ?? null, JSON.stringify(job.data), job.scheduledAt, job.cron ?? null, job.deleteJobOnCompletion ?? false],
       }], 'write');
     },
     getJob: async ({ jobId }) => {
