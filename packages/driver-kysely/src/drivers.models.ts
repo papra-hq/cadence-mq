@@ -19,6 +19,6 @@ export function toJob(row: JobSelectable): Job {
     error: row.error ?? undefined,
     cron: row.cron ?? undefined,
     createdAt: toDate(row.created_at),
-    deleteJobOnCompletion: row.delete_job_on_completion !== undefined ? row.delete_job_on_completion === 1 : undefined,
+    deleteJobOnCompletion: row.delete_job_on_completion !== undefined ? row.delete_job_on_completion === 1 : false,
   };
 }
