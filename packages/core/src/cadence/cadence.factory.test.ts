@@ -18,6 +18,7 @@ describe('cadence factory', () => {
         'registerTask',
         'getJob',
         'getJobCount',
+        'deleteJob',
         'getTaskRegistry',
         'getDriver',
       ]);

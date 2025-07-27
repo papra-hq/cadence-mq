@@ -25,6 +25,7 @@ export function createCadence({
     registerTask: taskRegistry.registerTask,
     getJob: driver.getJob,
     getJobCount: driver.getJobCount,
+    deleteJob: driver.deleteJob,
 
     getTaskRegistry: () => taskRegistry,
     getDriver: () => driver,

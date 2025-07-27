@@ -1,5 +1,6 @@
 import type { JobRepositoryDriver } from '@cadence-mq/core';
 import type { DatabaseClient } from './database/database.types';
+import { createJobNotFoundError } from '@cadence-mq/core';
 import { DEFAULT_POLL_INTERVAL_MS } from './driver.constants';
 import { toJob } from './drivers.models';
 
@@ -52,7 +53,7 @@ export function createSqlDriver({ client, pollIntervalMs = DEFAULT_POLL_INTERVAL
         .values({
           id: job.id,
           task_name: job.taskName,
-          data: job.data ? JSON.stringify(job.data) : null,
+          data: job.data ? JSON.stringify(job.data) : undefined,
           status: job.status,
           error: job.error,
           scheduled_at: job.scheduledAt.toISOString(),
@@ -104,6 +105,16 @@ export function createSqlDriver({ client, pollIntervalMs = DEFAULT_POLL_INTERVAL
           ...(values.status ? { status: values.status } : {}),
         })
         .execute();
+    },
+    deleteJob: async ({ jobId }) => {
+      const { numDeletedRows } = await client
+        .deleteFrom('jobs')
+        .where('id', '=', jobId)
+        .executeTakeFirst();
+
+      if (numDeletedRows === 0n) {
+        throw createJobNotFoundError();
+      }
     },
   };
 }

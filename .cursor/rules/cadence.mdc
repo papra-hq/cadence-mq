@@ -1,0 +1,22 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+CadenceMQ is a job scheduling library like BullMQ or Agenda but designed to be backend-agnostic and not tied to a storage layer (unlike BullMQ with Redis or Agenda with MongoDB). Users can plug in a driver to use a specific backend.
+
+## The monorepo
+
+The source code is organized in a pnpm-workspace monorepo, available on GitHub: `papra-hq/cadence-mq`.
+
+- The core functionality is under `packages/core`
+- Drivers are defined under `packages/driver-<name>`
+- There are test suites defined in the `packages/test-suite` package to help testing the drivers
+- There is a Markdown based documentation website made with astro starlight in the `docs` package
+- There is some demo snippets in the `demo` package
+
+## Code style
+
+* Prefer functional programming
+* Embrace dependency injection to make the code testable
+* In test files, prefer dependency injection–friendly snippets over magic mocks
