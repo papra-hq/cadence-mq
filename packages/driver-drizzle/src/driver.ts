@@ -43,7 +43,7 @@ function toJob(job: any): Job {
     ...job,
     data: job.data ? JSON.parse(job.data) : undefined,
     result: job.result ? JSON.parse(job.result) : undefined,
-    deleteJobOnCompletion: job.deleteJobOnCompletion !== undefined ? Boolean(job.deleteJobOnCompletion) : undefined,
+    deleteJobOnCompletion: job.deleteJobOnCompletion !== undefined ? Boolean(job.deleteJobOnCompletion) : false,
   };
 
   return Object.fromEntries(Object.entries(jobsWithNulls).map(([key, value]) => [key, value ?? undefined])) as Job;
