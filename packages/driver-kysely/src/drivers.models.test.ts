@@ -18,6 +18,7 @@ describe('drivers models', () => {
           error: undefined,
           cron: '0 0 * * *',
           created_at: '2025-01-01T00:00:00.000Z',
+          delete_job_on_completion: 0,
         }),
       ).to.eql({
         id: '123',
@@ -32,6 +33,7 @@ describe('drivers models', () => {
         error: undefined,
         cron: '0 0 * * *',
         createdAt: new Date('2025-01-01T00:00:00.000Z'),
+        deleteJobOnCompletion: false,
       });
     });
   });

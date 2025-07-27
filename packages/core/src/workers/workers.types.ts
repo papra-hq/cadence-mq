@@ -5,6 +5,7 @@ export type WorkerEvents = {
   'job.completed': { jobId: string; result: unknown };
   'job.failed': { jobId: string; error: Error | undefined };
   'job.rescheduled': { jobId: string; nextDate: Date; error: Error | undefined };
+  'job.deleted': { jobId: string };
   'task.not-found': { taskName: string };
 };
 

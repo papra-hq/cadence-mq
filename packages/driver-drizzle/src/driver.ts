@@ -43,6 +43,7 @@ function toJob(job: any): Job {
     ...job,
     data: job.data ? JSON.parse(job.data) : undefined,
     result: job.result ? JSON.parse(job.result) : undefined,
+    deleteJobOnCompletion: job.deleteJobOnCompletion !== undefined ? Boolean(job.deleteJobOnCompletion) : false,
   };
 
   return Object.fromEntries(Object.entries(jobsWithNulls).map(([key, value]) => [key, value ?? undefined])) as Job;
@@ -103,6 +104,7 @@ export function createDrizzleDriver({ db, pollIntervalMs = DEFAULT_POLL_INTERVAL
         ...(values.completedAt ? { completedAt: values.completedAt } : {}),
         ...(values.maxRetries ? { maxRetries: values.maxRetries } : {}),
         ...(values.status ? { status: values.status } : {}),
+        ...(values.deleteJobOnCompletion !== undefined ? { deleteJobOnCompletion: values.deleteJobOnCompletion } : {}),
       };
 
       await db

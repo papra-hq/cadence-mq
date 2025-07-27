@@ -10,6 +10,7 @@ export async function scheduleJob({
   now = new Date(),
   scheduledAt = now,
   maxRetries,
+  deleteJobOnCompletion = false,
   driver,
   taskRegistry,
   generateJobId = createId,
@@ -19,6 +20,7 @@ export async function scheduleJob({
   scheduledAt?: Date;
   now?: Date;
   maxRetries?: number;
+  deleteJobOnCompletion?: boolean;
   driver: JobRepositoryDriver;
   taskRegistry?: TaskDefinitionRegistry;
   generateJobId?: () => string;
@@ -32,6 +34,7 @@ export async function scheduleJob({
     scheduledAt,
     status: 'pending',
     maxRetries,
+    deleteJobOnCompletion,
     createdAt: now,
   };
 
@@ -75,6 +78,7 @@ export async function schedulePeriodicJob({
     maxRetries,
     cron,
     createdAt: now,
+    deleteJobOnCompletion: false,
   };
 
   if (existingJob) {
