@@ -1,4 +1,5 @@
 import type { Job, JobRepositoryDriver } from '@cadence-mq/core';
+import { createJobNotFoundError } from '@cadence-mq/core';
 
 import { and, asc, count, eq, lte } from 'drizzle-orm';
 import { DEFAULT_POLL_INTERVAL_MS } from './driver.constants';
@@ -108,6 +109,16 @@ export function createDrizzleDriver({ db, pollIntervalMs = DEFAULT_POLL_INTERVAL
         .update(jobsTable)
         .set(formattedValues)
         .where(eq(jobsTable.id, jobId));
+    },
+    deleteJob: async ({ jobId }) => {
+      const result = await db
+        .delete(jobsTable)
+        .where(eq(jobsTable.id, jobId))
+        .returning();
+
+      if (result.length === 0) {
+        throw createJobNotFoundError();
+      }
     },
   };
 }

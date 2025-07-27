@@ -1,5 +1,6 @@
 import type { Job, JobRepositoryDriver, JobStatus } from '@cadence-mq/core';
 import type { Client, Row } from '@libsql/client';
+import { createJobNotFoundError } from '@cadence-mq/core';
 import { DEFAULT_POLL_INTERVAL_MS } from './driver.constants';
 import { buildUpdateJobSetClause } from './driver.models';
 
@@ -102,6 +103,16 @@ export function createLibSqlDriver({ client, pollIntervalMs = DEFAULT_POLL_INTER
         sql: `UPDATE jobs SET ${setClause} WHERE id = ?`,
         args: [...args, jobId],
       }]);
+    },
+    deleteJob: async ({ jobId }) => {
+      const { rowsAffected } = await client.execute({
+        sql: 'DELETE FROM jobs WHERE id = ?',
+        args: [jobId],
+      });
+
+      if (rowsAffected === 0) {
+        throw createJobNotFoundError();
+      }
     },
   };
 }

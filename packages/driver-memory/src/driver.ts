@@ -122,5 +122,14 @@ export function createMemoryDriver(): JobRepositoryDriver {
 
       jobsRegistry.set(jobId, { ...existingJob, ...values });
     },
+    deleteJob: async ({ jobId }) => {
+      const existingJob = jobsRegistry.get(jobId);
+
+      if (!existingJob) {
+        throw createJobNotFoundError();
+      }
+
+      jobsRegistry.delete(jobId);
+    },
   };
 }

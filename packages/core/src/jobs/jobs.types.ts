@@ -29,4 +29,5 @@ export type JobRepositoryDriver = {
   getNextJobAndMarkAsProcessing: (arg: { abortSignal: AbortSignal; now?: Date }) => Promise<{ job: Job }>;
   getJob: (arg: { jobId: string }) => Promise<{ job: Job | null }>;
   getJobCount: (arg?: { filter?: { status?: JobStatus } }) => Promise<{ count: number }>;
+  deleteJob: (arg: { jobId: string }) => Promise<void>;
 };
