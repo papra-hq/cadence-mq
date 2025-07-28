@@ -1,6 +1,7 @@
 import type { JobRepositoryDriver } from '@cadence-mq/core';
 import type { DatabaseClient } from './database/database.types';
 import { createJobNotFoundError } from '@cadence-mq/core';
+import { sleepMs } from '@cadence-mq/core/utils/time';
 import { DEFAULT_POLL_INTERVAL_MS } from './driver.constants';
 import { toJob } from './drivers.models';
 
@@ -40,7 +41,7 @@ export function createSqlDriver({ client, pollIntervalMs = DEFAULT_POLL_INTERVAL
         const { job } = await getAndMarkJobAsProcessing({ client });
 
         if (!job) {
-          await new Promise(resolve => setTimeout(resolve, pollIntervalMs));
+          await sleepMs(pollIntervalMs);
           continue;
         }
 

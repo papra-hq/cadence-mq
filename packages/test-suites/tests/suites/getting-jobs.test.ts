@@ -66,6 +66,7 @@ export const testGettingJobs: TestSuite = ({ createDriver }) => {
         scheduledAt: new Date('2025-01-02'),
         createdAt: new Date('2025-01-01'),
         maxRetries: undefined,
+        deleteJobOnCompletion: false,
         result: {
           biz: 'bar',
         },

@@ -1,5 +1,6 @@
 import type { Job, JobRepositoryDriver } from '@cadence-mq/core';
 import { createJobNotFoundError } from '@cadence-mq/core';
+import { sleepMs } from '@cadence-mq/core/utils/time';
 
 import { and, asc, count, eq, lte } from 'drizzle-orm';
 import { DEFAULT_POLL_INTERVAL_MS } from './driver.constants';
@@ -62,7 +63,7 @@ export function createDrizzleDriver({ db, pollIntervalMs = DEFAULT_POLL_INTERVAL
         const { job } = await getAndMarkJobAsProcessing({ db, jobsTable });
 
         if (!job) {
-          await new Promise(resolve => setTimeout(resolve, pollIntervalMs));
+          await sleepMs(pollIntervalMs);
           continue;
         }
 
