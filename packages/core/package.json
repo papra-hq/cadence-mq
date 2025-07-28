@@ -26,6 +26,7 @@
   ],
   "exports": {
     ".": "./dist/index.js",
+    "./utils/time": "./dist/utils/time.js",
     "./package.json": "./package.json"
   },
   "main": "./dist/index.js",

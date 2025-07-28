@@ -1,5 +1,6 @@
 import type { Job, JobRepositoryDriver } from '@cadence-mq/core';
-import { createJobNotFoundError, createJobWithSameIdExistsError } from './errors';
+import { createJobNotFoundError } from '@cadence-mq/core';
+import { createJobWithSameIdExistsError } from './errors';
 
 function getNextJob({ jobsRegistry, processingTimeoutMs, now = new Date() }: { jobsRegistry: Map<string, Job>; processingTimeoutMs: number; now?: Date }) {
   let nextJob: Job | null = null;
@@ -87,19 +88,21 @@ export function createMemoryDriver(): JobRepositoryDriver {
       refreshConsumption({ processingTimeoutMs: 10 * 60 * 1000 });
     },
     getJob: async ({ jobId }) => {
-      const job = jobsRegistry.get(jobId) ?? null;
+      const job = jobsRegistry.get(jobId);
+
+      if (!job) {
+        return { job: null };
+      }
 
       return {
-        job: job
-          ? {
-              result: undefined,
-              error: undefined,
-              startedAt: undefined,
-              completedAt: undefined,
-              cron: undefined,
-              ...job,
-            }
-          : null,
+        job: {
+          result: undefined,
+          error: undefined,
+          startedAt: undefined,
+          completedAt: undefined,
+          cron: undefined,
+          ...job,
+        },
       };
     },
     getJobCount: async ({ filter } = {}) => {
@@ -108,8 +111,9 @@ export function createMemoryDriver(): JobRepositoryDriver {
       }
 
       const filterEntries = Object.entries(filter);
+      const isJobMatchingFilter = (job: Job) => filterEntries.every(([key, value]) => job[key as keyof Job] === value);
 
-      const filteredJobs = Array.from(jobsRegistry.values()).filter(job => filterEntries.every(([key, value]) => job[key as keyof Job] === value));
+      const filteredJobs = Array.from(jobsRegistry.values()).filter(isJobMatchingFilter);
 
       return { count: filteredJobs.length };
     },
