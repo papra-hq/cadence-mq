@@ -23,6 +23,11 @@ export type {
   JsonSerializable,
 } from './jobs/jobs.types';
 
+export type {
+  CadenceLogger,
+  CadenceLoggerArgs,
+} from './logger/logger.types';
+
 export {
   createScheduler,
   scheduleJob,
