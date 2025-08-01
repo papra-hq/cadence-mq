@@ -1,4 +1,5 @@
 import type { JobRepositoryDriver } from '../jobs/jobs.types';
+import type { CadenceLogger } from '../logger/logger.types';
 import type { TaskDefinitionRegistry } from '../tasks/task-definition.registry';
 import type { WorkerEventEmitter } from './workers.types';
 import { createJobNotFoundError } from '../errors/errors.definitions';
@@ -15,6 +16,7 @@ async function consumeJob({
   now,
   eventEmitter,
   throwOnTaskNotFound = false,
+  logger,
 }: {
   driver: JobRepositoryDriver;
   taskRegistry: TaskDefinitionRegistry;
@@ -23,9 +25,12 @@ async function consumeJob({
   now?: Date;
   eventEmitter: WorkerEventEmitter;
   throwOnTaskNotFound?: boolean;
+  logger?: Partial<CadenceLogger>;
 }) {
   const { job } = await driver.getNextJobAndMarkAsProcessing({ abortSignal, now });
   const { id: jobId, taskName } = job;
+
+  logger?.debug?.({ jobId, taskName }, 'Consuming job');
 
   const { taskDefinition } = taskRegistry.getTask({ taskName });
 
@@ -53,21 +58,25 @@ async function consumeJob({
     } });
 
     eventEmitter.emit('job.rescheduled', { jobId, nextDate, error });
+    logger?.info?.({ jobId, taskName, nextDate }, 'Job rescheduled');
     return;
   }
 
   if (error) {
     await driver.updateJob({ jobId, values: { error: serializeError({ error }), status: 'failed', completedAt: now }, now });
     eventEmitter.emit('job.failed', { jobId, error });
+    logger?.error?.({ jobId, taskName, error }, 'Job failed');
     return;
   }
 
   await driver.updateJob({ jobId, values: { result, status: 'completed', completedAt: now }, now });
   eventEmitter.emit('job.completed', { jobId, result });
+  logger?.info?.({ jobId, taskName }, 'Job completed');
 
   if (job.deleteJobOnCompletion && !job.cron) {
     await driver.deleteJob({ jobId });
     eventEmitter.emit('job.deleted', { jobId });
+    logger?.info?.({ jobId, taskName }, 'Job deleted');
   }
 }
 
@@ -78,6 +87,7 @@ export function startConsumingJobs({
   abortSignal,
   getNow,
   eventEmitter,
+  logger,
 }: {
   driver: JobRepositoryDriver;
   taskRegistry: TaskDefinitionRegistry;
@@ -85,10 +95,11 @@ export function startConsumingJobs({
   abortSignal: AbortSignal;
   getNow?: () => Date;
   eventEmitter: WorkerEventEmitter;
+  logger?: Partial<CadenceLogger>;
 }) {
   setImmediate(async () => {
     while (true) {
-      await consumeJob({ driver, taskRegistry, workerId, abortSignal, now: getNow?.(), eventEmitter });
+      await consumeJob({ driver, taskRegistry, workerId, abortSignal, now: getNow?.(), eventEmitter, logger });
     }
   });
 }

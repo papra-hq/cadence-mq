@@ -1,4 +1,5 @@
 import type { JobRepositoryDriver } from '../jobs/jobs.types';
+import type { CadenceLogger } from '../logger/logger.types';
 import type { TaskDefinitionRegistry } from '../tasks/task-definition.registry';
 import { createPeriodicJobScheduler, createScheduler } from '../scheduler/scheduler';
 import { createTaskRegistry } from '../tasks/task-definition.registry';
@@ -12,13 +13,15 @@ export function createCadence({
   driver,
   generateJobId,
   taskRegistry = createTaskRegistry(),
+  logger,
 }: {
   driver: JobRepositoryDriver;
   generateJobId?: () => string;
   taskRegistry?: TaskDefinitionRegistry;
+  logger?: Partial<CadenceLogger>;
 }) {
   return {
-    createWorker: createWorkerFactory({ driver, taskRegistry }),
+    createWorker: createWorkerFactory({ driver, taskRegistry, logger }),
     scheduleJob: createScheduler({ driver, taskRegistry, generateJobId }),
     schedulePeriodicJob: createPeriodicJobScheduler({ driver, taskRegistry }),
 
