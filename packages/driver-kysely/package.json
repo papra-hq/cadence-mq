@@ -1,7 +1,7 @@
 {
   "name": "@cadence-mq/driver-kysely",
   "type": "module",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "packageManager": "pnpm@10.10.0",
   "description": "Generic SQL driver for CadenceMQ based on Kysely query builder",
   "author": "Corentin Thomasset <corentinth@proton.me> (https://corentin.tech)",
@@ -48,7 +48,7 @@
     "prepublishOnly": "pnpm build"
   },
   "peerDependencies": {
-    "@cadence-mq/core": "workspace:^0.1.0",
+    "@cadence-mq/core": "workspace:^0.2.0",
     "@libsql/client": "^0.15.9"
   },
   "dependencies": {

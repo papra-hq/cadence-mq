@@ -1,7 +1,7 @@
 {
   "name": "@cadence-mq/test-suites",
   "type": "module",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "packageManager": "pnpm@10.10.0",
   "description": "A collection of test suites for testing CadenceMQ drivers.",
@@ -36,7 +36,7 @@
     "lint:fix": "eslint . --fix"
   },
   "peerDependencies": {
-    "@cadence-mq/core": "workspace:^0.1.0"
+    "@cadence-mq/core": "workspace:^0.2.0"
   },
   "devDependencies": {
     "@antfu/eslint-config": "catalog:",
