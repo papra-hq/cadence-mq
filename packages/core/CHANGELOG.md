@@ -1,5 +1,11 @@
 # @cadence-mq/core
 
+## 0.2.1
+
+### Patch Changes
+
+- [#21](https://github.com/papra-hq/cadence-mq/pull/21) [`035fa77`](https://github.com/papra-hq/cadence-mq/commit/035fa77655e3f33d422a0c877d8178ba9a0b08b9) Thanks [@CorentinTh](https://github.com/CorentinTh)! - Added prepublish script to enforce fresh publishing
+
 ## 0.2.0
 
 ### Minor Changes
