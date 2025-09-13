@@ -1,5 +1,16 @@
 # @cadence-mq/driver-libsql
 
+## 0.1.1
+
+### Patch Changes
+
+- [#25](https://github.com/papra-hq/cadence-mq/pull/25) [`ade2172`](https://github.com/papra-hq/cadence-mq/commit/ade217284b5d92abc1dd3945407732b1ad4bfa8c) Thanks [@CorentinTh](https://github.com/CorentinTh)! - Removed sourcemaps from published package
+
+- [#25](https://github.com/papra-hq/cadence-mq/pull/25) [`ade2172`](https://github.com/papra-hq/cadence-mq/commit/ade217284b5d92abc1dd3945407732b1ad4bfa8c) Thanks [@CorentinTh](https://github.com/CorentinTh)! - Added OIDC trusted publisher provenance for packages
+
+- Updated dependencies [[`ade2172`](https://github.com/papra-hq/cadence-mq/commit/ade217284b5d92abc1dd3945407732b1ad4bfa8c), [`ade2172`](https://github.com/papra-hq/cadence-mq/commit/ade217284b5d92abc1dd3945407732b1ad4bfa8c)]:
+  - @cadence-mq/core@0.2.2
+
 ## 0.1.0
 
 ### Minor Changes
