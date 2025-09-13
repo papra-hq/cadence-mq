@@ -32,6 +32,9 @@
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsdown",
     "build:watch": "tsdown --watch",
@@ -42,6 +45,11 @@
     "test:watch": "vitest watch",
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "pnpm build"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true,
+    "registry": "https://registry.npmjs.org"
   },
   "dependencies": {
     "@corentinth/chisels": "^1.3.1",
