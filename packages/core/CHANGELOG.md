@@ -1,5 +1,11 @@
 # @cadence-mq/core
 
+## 0.2.3
+
+### Patch Changes
+
+- [#27](https://github.com/papra-hq/cadence-mq/pull/27) [`7ce6a49`](https://github.com/papra-hq/cadence-mq/commit/7ce6a49a210e9780d20537a3f7b6da997a8f3345) Thanks [@CorentinTh](https://github.com/CorentinTh)! - Fix publishing
+
 ## 0.2.2
 
 ### Patch Changes
