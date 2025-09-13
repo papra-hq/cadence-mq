@@ -1,7 +1,7 @@
 {
   "name": "@cadence-mq/driver-libsql",
   "type": "module",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "packageManager": "pnpm@10.10.0",
   "description": "LibSQL driver for CadenceMQ",
   "author": "Corentin Thomasset <corentinth@proton.me> (https://corentin.tech)",

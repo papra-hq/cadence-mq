@@ -1,5 +1,11 @@
 # @cadence-mq/driver-libsql
 
+## 0.2.1
+
+### Patch Changes
+
+- [#23](https://github.com/papra-hq/cadence-mq/pull/23) [`1270282`](https://github.com/papra-hq/cadence-mq/commit/12702820e940bf3e98a88f7ca70c2ac236f41822) Thanks [@CorentinTh](https://github.com/CorentinTh)! - Fix an issue caused when scheduling tasks with no data
+
 ## 0.2.0
 
 ### Minor Changes
