@@ -117,5 +117,31 @@ export const testScheduledJobs: TestSuite = ({ createDriver, processingLatencyMs
 
       expect(runOrder.map(({ id }) => id)).to.eql([2, 3, 1]);
     });
+
+    test('a job can be scheduled without data', async () => {
+      const { driver } = await createDriver();
+      const cadence = createCadence({ driver });
+
+      const tasksInvocations: { at: Date }[] = [];
+
+      cadence.registerTask({
+        taskName: 'test',
+        handler: async () => {
+          tasksInvocations.push({ at: new Date() });
+        },
+      });
+
+      await cadence.scheduleJob({
+        taskName: 'test',
+        scheduledAt: new Date(),
+      });
+
+      const worker = cadence.createWorker({ workerId: 'worker-1' });
+      worker.start();
+
+      await vi.advanceTimersByTimeAsync(processingLatencyMs);
+
+      expect(tasksInvocations.length).to.eql(1);
+    });
   });
 };

@@ -40,5 +40,33 @@ export const testPeriodicTasks: TestSuite = ({ createDriver }) => {
 
       expect(taskArgs.length).to.eql(10);
     });
+
+    test('most of the time, scheduled jobs have no task data', async () => {
+      const { driver } = await createDriver();
+
+      const cadence = createCadence({ driver });
+
+      const taskArgs: unknown[] = [];
+
+      cadence.registerTask({
+        taskName: 'test',
+        handler: async (args) => {
+          taskArgs.push(args);
+        },
+      });
+
+      await cadence.schedulePeriodicJob({
+        scheduleId: 'recurring-job',
+        cron: '*/1 * * * *', // every minute
+        taskName: 'test',
+      });
+
+      const worker = cadence.createWorker({ workerId: 'worker-1' });
+      worker.start();
+
+      await vi.advanceTimersByTimeAsync(1000 * 60 * 10); // 10 minutes
+
+      expect(taskArgs.length).to.eql(10);
+    });
   });
 };
