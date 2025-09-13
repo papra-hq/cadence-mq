@@ -40,4 +40,3 @@ jobs:
           title: "chore(release): update versions"
         env:
           GITHUB_TOKEN: ${{ secrets.CHANGESET_GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
