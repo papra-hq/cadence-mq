@@ -1,5 +1,11 @@
 # @cadence-mq/driver-libsql
 
+## 0.2.4
+
+### Patch Changes
+
+- [#29](https://github.com/papra-hq/cadence-mq/pull/29) [`70dfa8e`](https://github.com/papra-hq/cadence-mq/commit/70dfa8e80134836bca8881b6e38de8b52d4fb819) Thanks [@CorentinTh](https://github.com/CorentinTh)! - Added optional parameter to exclude PRAGMA statements from migration
+
 ## 0.2.3
 
 ### Patch Changes
