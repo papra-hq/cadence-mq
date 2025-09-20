@@ -1,10 +1,14 @@
 import type { Client } from '@libsql/client';
 
-export function getSchema() {
-  return `
+export function getSchema({ withPragma = true }: { withPragma?: boolean } = {}) {
+  return /* sql */`
+${withPragma
+  ? /* sql */`
 PRAGMA journal_mode = WAL;
 PRAGMA synchronous = 1;
 PRAGMA busy_timeout = 5000;
+  `
+  : ''}
 
 CREATE TABLE IF NOT EXISTS jobs (
   id TEXT PRIMARY KEY,
@@ -26,6 +30,6 @@ CREATE INDEX IF NOT EXISTS jobs_status_scheduled_at_started_at_idx ON jobs (stat
   `.trim();
 }
 
-export async function setupSchema({ client }: { client: Client }) {
-  await client.executeMultiple(getSchema());
+export async function setupSchema({ client, withPragma }: { client: Client; withPragma?: boolean }) {
+  await client.executeMultiple(getSchema({ withPragma }));
 }
