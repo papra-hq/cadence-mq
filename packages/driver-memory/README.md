@@ -1,42 +1,15 @@
 # @cadence-mq/driver-memory
 
-Memory driver for CadenceMQ.
+Process-local in-memory driver for CadenceMQ. It supports an injected clock for deterministic tests.
 
-## Installation
+```ts
+import { createCadence, createControlledClock } from '@cadence-mq/core';
+import { memory } from '@cadence-mq/driver-memory';
 
-```bash
-pnpm add @cadence-mq/core @cadence-mq/driver-memory
+const clock = createControlledClock();
+const cadence = createCadence({ driver: memory({ clock }) });
 ```
-
-## Usage
-
-```typescript
-import { createQueue } from '@cadence-mq/core';
-import { createMemoryDriver } from '@cadence-mq/driver-memory';
-
-const queue = createQueue({ driver: createMemoryDriver() });
-
-queue.registerTask({
-  name: 'my-job',
-  handler: async ({ data }) => {
-    console.log(data);
-  },
-});
-
-queue.startWorker({ workerId: 'my-worker' });
-
-await queue.scheduleJob({
-  taskName: 'my-job',
-  data: {
-    message: 'Hello, world!',
-  },
-});
-```
-
-## Credits
-
-Part of [Papra](https://papra.app) ecosystem, and coded with ❤️ by [Corentin Thomasset](https://corentin.tech).
 
 ## License
 
-This project is under the [MIT license](LICENSE).
+[MIT](./LICENSE)

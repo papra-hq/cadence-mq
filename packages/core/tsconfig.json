@@ -3,6 +3,8 @@
     "target": "ESNext",
     "moduleDetection": "force",
     "module": "preserve",
+    "lib": ["ESNext"],
+    "types": ["node"],
     "resolveJsonModule": true,
     "allowJs": true,
     "strict": true,

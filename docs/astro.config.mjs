@@ -1,7 +1,7 @@
 import starlight from '@astrojs/starlight';
 // @ts-check
 import { defineConfig } from 'astro/config';
-import starlightNextjsTheme from 'starlight-nextjs-theme';
+import starlightNextjsTheme from 'starlight-theme-next';
 
 // https://astro.build/config
 export default defineConfig({
@@ -18,15 +18,7 @@ export default defineConfig({
       sidebar: [
         {
           label: 'Introduction',
-          autogenerate: { directory: '01-introduction' },
-        },
-        {
-          label: 'Drivers',
-          autogenerate: { directory: '02-drivers' },
-        },
-        {
-          label: 'Guides',
-          autogenerate: { directory: '03-guides' },
+          items: [{ autogenerate: { directory: '01-introduction' } }],
         },
       ],
       editLink: {

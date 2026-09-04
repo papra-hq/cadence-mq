@@ -1,48 +1,35 @@
 # @cadence-mq/core
 
-Core library for CadenceMQ.
+Core task, job, driver, client, and worker contracts for CadenceMQ.
 
-## Installation
+> The v1 API is under active development and is not stable yet.
 
-```bash
-pnpm add @cadence-mq/core @cadence-mq/driver-libsql @libsql/client
+```ts
+import { createCadence, defineHandler, defineTask } from '@cadence-mq/core';
+import { memory } from '@cadence-mq/driver-memory';
+import * as v from 'valibot';
+
+const greet = defineTask({
+  name: 'greet',
+  schema: v.object({ name: v.string() }),
+});
+
+const cadence = createCadence({ driver: memory() });
+const worker = cadence.createWorker({
+  handlers: [
+    defineHandler(greet, async ({ name }) => {
+      await sendGreeting(name);
+    }),
+  ],
+});
+
+await cadence.enqueue(greet, { name: 'Ada' });
+await worker.start();
+
+// Stops this client's workers before closing its driver.
+await cadence.close();
 ```
-
-## Usage
-
-```typescript
-import { createQueue } from '@cadence-mq/core';
-import { createLibSqlDriver } from '@cadence-mq/driver-libsql';
-import { createClient } from '@libsql/client';
-
-const client = createClient({
-  url: 'file:./cadence-mq.db',
-});
-
-const driver = createLibSqlDriver({ client });
-const queue = createQueue({ driver });
-
-queue.registerTask({
-  name: 'my-job',
-  handler: async ({ data }) => {
-    console.log(data);
-  },
-});
-
-queue.startWorker({ workerId: 'my-worker' });
-
-await queue.scheduleJob({
-  taskName: 'my-job',
-  data: {
-    message: 'Hello, world!',
-  },
-});
-```
-
-## Credits
-
-Part of [Papra](https://papra.app) ecosystem, and coded with ❤️ by [Corentin Thomasset](https://corentin.tech).
 
 ## License
 
-This project is under the [MIT license](LICENSE).
+[MIT](./LICENSE)

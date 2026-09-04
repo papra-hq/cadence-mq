@@ -1,8 +1,2 @@
-export {
-  createLibSqlDriver,
-} from './driver';
-
-export {
-  getSchema,
-  setupSchema,
-} from './migrations';
+export type { LibsqlOptions } from './libsql-driver';
+export { createLibSqlDriver, createLibsqlDriver, libsql } from './libsql-driver';

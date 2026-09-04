@@ -1,40 +1,24 @@
 {
   "name": "@cadence-mq/driver-memory",
-  "type": "module",
-  "version": "0.2.2",
-  "packageManager": "pnpm@10.10.0",
-  "description": "Memory driver for CadenceMQ",
-  "author": "Corentin Thomasset <corentinth@proton.me> (https://corentin.tech)",
-  "license": "MIT",
-  "homepage": "https://github.com/papra-hq/cadence-mq/tree/main/packages/driver-memory",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/papra-hq/cadence-mq",
-    "directory": "packages/driver-memory"
-  },
-  "bugs": {
-    "url": "https://github.com/papra-hq/cadence-mq/issues"
-  },
+  "version": "0.2.3",
+  "description": "In-memory driver for CadenceMQ",
   "keywords": [
     "cadence",
     "cadence-mq",
-    "memory",
-    "job-scheduler",
     "job-queue",
-    "task-queue",
-    "tasks",
-    "jobs"
+    "memory",
+    "task-queue"
   ],
-  "exports": {
-    ".": "./dist/index.js",
-    "./package.json": "./package.json"
-  },
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "license": "MIT",
   "files": [
     "dist"
   ],
+  "type": "module",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": "./dist/index.mjs",
+    "./package.json": "./package.json"
+  },
   "publishConfig": {
     "access": "public",
     "provenance": true,
@@ -44,23 +28,19 @@
     "build": "tsdown",
     "build:watch": "tsdown --watch",
     "dev": "pnpm build:watch",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
     "test": "vitest run",
     "test:watch": "vitest watch",
-    "prepublishOnly": "pnpm build"
+    "prepack": "pnpm build"
+  },
+  "devDependencies": {
+    "@cadence-mq/core": "workspace:*",
+    "@types/node": "^26.4.1",
+    "tsdown": "^0.22.14",
+    "typescript": "^7.0.2",
+    "valibot": "^1.4.2",
+    "vitest": "^5.0.0"
   },
   "peerDependencies": {
     "@cadence-mq/core": "workspace:^0.2.3"
-  },
-  "devDependencies": {
-    "@antfu/eslint-config": "catalog:",
-    "@cadence-mq/test-suites": "workspace:*",
-    "@types/node": "catalog:",
-    "@vitest/coverage-v8": "catalog:",
-    "eslint": "catalog:",
-    "tsdown": "catalog:",
-    "typescript": "catalog:",
-    "vitest": "catalog:"
   }
 }
