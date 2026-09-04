@@ -1,23 +1,24 @@
 {
   "name": "@cadence-mq/root",
+  "private": true,
   "license": "MIT",
-  "packageManager": "pnpm@10.10.0",
+  "type": "module",
   "scripts": {
-    "changeset": "changeset",
-    "changeset:version": "pnpm changeset version && pnpm install --no-frozen-lockfile",
-    "changeset:publish": "pnpm changeset publish",
-    "test": "TZ=UTC vitest run",
-    "test:watch": "TZ=UTC vitest watch",
-    "dev": "pnpm build:watch",
-    "build": "pnpm -r --parallel -F './packages/*' build",
-    "build:watch": "pnpm -r --parallel -F './packages/*' build:watch",
-    "lint": "pnpm -r --parallel lint",
-    "lint:fix": "pnpm -r --parallel lint:fix"
+    "dev": "pnpm build:packages:watch",
+    "build:packages": "pnpm -r --parallel -F './packages/*' build",
+    "build:packages:watch": "pnpm -r --parallel -F './packages/*' build:watch",
+    "test": "vitest run",
+    "test:watch": "vitest watch",
+    "check": "oxlint && oxfmt --check",
+    "check:quiet": "oxlint --quiet && oxfmt --check",
+    "check:fix": "oxlint --fix && oxfmt"
   },
   "devDependencies": {
-    "@changesets/changelog-github": "^0.5.1",
-    "@changesets/cli": "^2.29.5",
-    "vitest": "catalog:",
-    "@vitest/coverage-v8": "catalog:"
-  }
+    "@vitest/coverage-v8": "^5.0.0",
+    "oxfmt": "^0.66.0",
+    "oxlint": "^1.81.0",
+    "oxlint-tsgolint": "^7.0.2001",
+    "vitest": "^5.0.0"
+  },
+  "packageManager": "pnpm@11.22.0"
 }

@@ -1,3 +1,0 @@
-export {
-  createMemoryDriver,
-} from './driver';

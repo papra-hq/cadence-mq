@@ -13,23 +13,26 @@ jobs:
 
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      
+
       - name: Install pnpm
         uses: pnpm/action-setup@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 26
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm i
+        run: pnpm i --frozen-lockfile
 
-      - name: Run linters in all packages
-        run: pnpm -r --parallel lint
+      - name: Run quality checks
+        run: pnpm check
 
-      - name: Build all packages
-        run: pnpm -r --parallel build
+      - name: Build packages
+        run: pnpm build:packages
 
-      - name: Run tests from vitest projects
+      - name: Run tests
         run: pnpm test
+
+      - name: Build documentation
+        run: pnpm --filter @cadence-mq/docs build

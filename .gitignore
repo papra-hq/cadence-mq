@@ -1,42 +1,22 @@
-# Nuxt dev/build outputs
-.output
-.data
-.nuxt
-.nitro
-.cache
-dist
-dist-app
-dist-node
-dist-cloudflare
+# Dependencies
+node_modules/
 
-# Node dependencies
-node_modules
+# Build and test output
+dist/
+coverage/
+.cache/
 
 # Logs
-logs
 *.log
 
-# Misc
-.DS_Store
-.fleet
-.idea
-
-# Local env files
+# Local environment files
 .env
 .env.*
 !.env.example
 
-.wrangler
-coverage
-cache
-.zed
-*.vars
-*.db
-*.db-shm
-*.db-wal
-*.sqlite
-
-local-documents
-ingestion
-.cursorrules
-*.traineddata
+# Editors and operating systems
+.DS_Store
+.fleet/
+.idea/
+.vscode/
+.zed/
