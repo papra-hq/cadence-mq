@@ -2,7 +2,14 @@ import type { Driver, ClaimedJob } from '../driver/driver';
 import type { HandlerDefinition } from '../handlers/handler-definition';
 import { createError } from '../../errors/errors.models';
 import { getHandlerInternals } from '../handlers/handler-definition';
+import { PermanentTaskError } from '../handlers/permanent-task-error';
+import { serializeJobError } from '../jobs/serialize-job-error';
+import { retryDelay } from '../shared/retry';
 import { validatePayload } from '../tasks/validate-payload';
+
+export type ClaimedJobHandlerOutcome =
+  | { status: 'succeeded' }
+  | { status: 'failed'; error: unknown; permanent: boolean };
 
 export async function runWorkerOperation({
   driver,
@@ -70,18 +77,78 @@ async function executeClaimedJob({
   }
 
   try {
-    await runClaimedJobHandler({ handler, job, signal: controller.signal });
-
-    const completed = await driver.completeJob({ id: job.id, token: job.leaseToken });
-    if (!completed) {
-      throw createError({
-        code: 'job.stale-lease',
-        message: `The lease for job ${job.id} is no longer current`,
-      });
+    const outcome = await executeClaimedJobHandler({
+      handler,
+      job,
+      signal: controller.signal,
+    });
+    const transitioned = await transitionClaimedJob({ driver, job, outcome });
+    if (!transitioned) {
+      throw createStaleLeaseError(job.id);
     }
   } finally {
     signal?.removeEventListener('abort', abort);
   }
+}
+
+export async function executeClaimedJobHandler({
+  handler,
+  job,
+  signal,
+}: {
+  handler: HandlerDefinition;
+  job: ClaimedJob;
+  signal: AbortSignal;
+}): Promise<ClaimedJobHandlerOutcome> {
+  const { schema, run } = getHandlerInternals(handler);
+  let payload;
+
+  try {
+    payload = validatePayload(schema, job.payload);
+  } catch (error) {
+    return { status: 'failed', error, permanent: true };
+  }
+
+  try {
+    await run(payload, {
+      jobId: job.id,
+      taskName: job.taskName,
+      attempt: job.attempts,
+      availableAt: job.availableAt,
+      signal,
+      ...(job.schedule === undefined ? {} : { schedule: job.schedule }),
+    });
+    return { status: 'succeeded' };
+  } catch (error) {
+    return { status: 'failed', error, permanent: isPermanentTaskError(error) };
+  }
+}
+
+export async function transitionClaimedJob({
+  driver,
+  job,
+  outcome,
+}: {
+  driver: Driver;
+  job: ClaimedJob;
+  outcome: ClaimedJobHandlerOutcome;
+}): Promise<boolean> {
+  const lease = { id: job.id, token: job.leaseToken };
+
+  if (outcome.status === 'succeeded') {
+    return driver.completeJob(lease);
+  }
+
+  const error = serializeJobError(outcome.error);
+  if (outcome.permanent || job.attempts >= job.retry.maxAttempts) {
+    return driver.failJob({ lease, error });
+  }
+
+  return driver.retryJob({
+    lease,
+    error,
+    delayMs: retryDelay(job.retry, job.attempts),
+  });
 }
 
 export async function runClaimedJobHandler({
@@ -93,15 +160,23 @@ export async function runClaimedJobHandler({
   job: ClaimedJob;
   signal: AbortSignal;
 }): Promise<void> {
-  const { schema, run } = getHandlerInternals(handler);
-  const payload = validatePayload(schema, job.payload);
+  const outcome = await executeClaimedJobHandler({ handler, job, signal });
+  if (outcome.status === 'failed') {
+    throw outcome.error;
+  }
+}
 
-  await run(payload, {
-    jobId: job.id,
-    taskName: job.taskName,
-    attempt: job.attempts,
-    availableAt: job.availableAt,
-    signal,
-    ...(job.schedule === undefined ? {} : { schedule: job.schedule }),
+function isPermanentTaskError(error: unknown): boolean {
+  try {
+    return error instanceof PermanentTaskError;
+  } catch {
+    return false;
+  }
+}
+
+function createStaleLeaseError(jobId: string) {
+  return createError({
+    code: 'job.stale-lease',
+    message: `The lease for job ${jobId} is no longer current`,
   });
 }

@@ -53,6 +53,25 @@ export function cloneRetryPolicy(retry: RetryPolicy): RetryPolicy {
     : { maxAttempts: retry.maxAttempts, backoff: { ...retry.backoff } };
 }
 
+export function retryDelay(retry: RetryPolicy, failedAttempt: number): number {
+  if (retry.backoff === undefined) {
+    return 0;
+  }
+
+  if (retry.backoff.type === 'fixed') {
+    return retry.backoff.delayMs;
+  }
+
+  if (retry.backoff.initialDelayMs === 0) {
+    return 0;
+  }
+
+  return Math.min(
+    retry.backoff.initialDelayMs * 2 ** (failedAttempt - 1),
+    retry.backoff.maxDelayMs,
+  );
+}
+
 function assertPositiveInteger(value: number, field: string): void {
   if (!Number.isInteger(value) || value < 1) {
     throw createInvalidRetryPolicyError(field);
