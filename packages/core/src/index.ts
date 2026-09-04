@@ -10,6 +10,7 @@ export type { ClaimedJob, Driver, LeaseRef, NewJob } from './driver/driver';
 
 export type { Awaitable, HandlerContext, HandlerDefinition } from './handlers/handler-definition';
 export { defineHandler } from './handlers/handler-definition';
+export { PermanentTaskError } from './handlers/permanent-task-error';
 
 export type { EnqueueOptions, Job, JobStatus, SerializedJobError } from './jobs/job';
 

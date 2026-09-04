@@ -6,7 +6,7 @@ import type { CadenceError } from '../../errors/errors.models';
 import { createError, isCadenceError } from '../../errors/errors.models';
 import { systemClock } from '../clock/system-clock';
 import { getHandlerInternals } from '../handlers/handler-definition';
-import { runClaimedJobHandler } from './worker-operation';
+import { executeClaimedJobHandler, transitionClaimedJob } from './worker-operation';
 
 export type WorkerOptions = {
   handlers: ReadonlyArray<HandlerDefinition>;
@@ -116,32 +116,30 @@ export function createWorker({
 
   const execute = async (execution: ActiveExecution, handler: HandlerDefinition): Promise<void> => {
     try {
-      try {
-        await runClaimedJobHandler({
-          handler,
-          job: execution.job,
-          signal: execution.controller.signal,
-        });
-      } catch {
-        // Handler outcomes will be persisted by the retry/failure milestone.
-        return;
-      }
+      const outcome = await executeClaimedJobHandler({
+        handler,
+        job: execution.job,
+        signal: execution.controller.signal,
+      });
 
       if (execution.leaseState !== 'current') {
         return;
       }
 
       try {
-        const completed = await driver.completeJob({
-          id: execution.job.id,
-          token: execution.job.leaseToken,
+        const transitioned = await transitionClaimedJob({
+          driver,
+          job: execution.job,
+          outcome,
         });
-        if (!completed) {
+        if (!transitioned) {
           markLeaseStale(execution);
         }
       } catch (error) {
         reportError(error, options.onError);
       }
+    } catch (error) {
+      reportError(error, options.onError);
     } finally {
       if (activeExecutions.get(execution.key) === execution) {
         activeExecutions.delete(execution.key);
