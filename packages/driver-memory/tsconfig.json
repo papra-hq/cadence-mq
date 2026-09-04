@@ -2,7 +2,8 @@
   "extends": "../core/tsconfig.json",
   "compilerOptions": {
     "paths": {
-      "@cadence-mq/core": ["../core/src/index.ts"]
+      "@cadence-mq/core": ["../core/src/index.ts"],
+      "@cadence-mq/core/driver-test": ["../core/src/driver-test.ts"]
     }
   },
   "include": ["src"]

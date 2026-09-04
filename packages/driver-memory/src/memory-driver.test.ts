@@ -1,7 +1,8 @@
-import type { Driver, Job, JsonValue, LeaseRef, NewJob } from '@cadence-mq/core';
+import type { JsonValue, NewJob } from '@cadence-mq/core';
 import { describe, expect, test } from 'vitest';
 import * as v from 'valibot';
-import { createCadence, createControlledClock, defineHandler, defineTask } from '@cadence-mq/core';
+import { createCadence, createControlledClock, defineTask } from '@cadence-mq/core';
+import { runDriverTestSuite } from '@cadence-mq/core/driver-test';
 import { memory } from './memory-driver';
 
 const start = Temporal.Instant.from('2026-01-01T00:00:00Z');
@@ -288,52 +289,8 @@ describe('memory driver', () => {
     await driver.close();
     await driver.close();
   });
-});
 
-describe('fundamental queue path', () => {
-  test('define, enqueue, claim, execute, complete, and inspect reaches succeeded', async () => {
-    const clock = createControlledClock({ now: start });
-    const backingDriver = memory({ clock });
-    const completion = Promise.withResolvers<LeaseRef>();
-    const driver: Driver = {
-      ...backingDriver,
-      completeJob: async (lease) => {
-        const completed = await backingDriver.completeJob(lease);
-        if (completed) {
-          completion.resolve(lease);
-        }
-        return completed;
-      },
-    };
-    const task = defineTask({
-      name: 'email.send',
-      schema: v.object({ recipient: v.string() }),
-    });
-    const received: Array<{ recipient: string }> = [];
-    const cadence = createCadence({ driver });
-    const worker = cadence.createWorker({
-      handlers: [
-        defineHandler(task, (payload) => {
-          received.push(payload);
-        }),
-      ],
-      pollingIntervalMs: 60_000,
-      leaseDurationMs: 30_000,
-    });
-
-    const job = await cadence.enqueue(task, { recipient: 'jane@example.com' });
-    expect(job.status).toBe('pending');
-
-    await worker.start();
-    await completion.promise;
-    await worker.stop();
-
-    expect(received).toEqual([{ recipient: 'jane@example.com' }]);
-    expect(await cadence.getJob(job.id)).toMatchObject({
-      id: job.id,
-      taskName: 'email.send',
-      status: 'succeeded',
-      attempts: 1,
-    } satisfies Partial<Job>);
+  runDriverTestSuite({
+    createDriver: () => memory({ clock: createControlledClock({ now: start }) }),
   });
 });

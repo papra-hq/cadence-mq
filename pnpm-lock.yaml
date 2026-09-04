@@ -63,6 +63,9 @@ importers:
       valibot:
         specifier: ^1.4.2
         version: 1.4.2(typescript@7.0.2)
+      vitest:
+        specifier: ^5.0.0
+        version: 5.0.0(@types/node@26.4.1)(@vitest/coverage-v8@5.0.0)(vite@8.2.2(@types/node@26.4.1)(esbuild@0.28.2))
 
   packages/driver-libsql:
     dependencies:
