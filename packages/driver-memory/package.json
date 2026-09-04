@@ -1,27 +1,15 @@
 {
-  "name": "@cadence-mq/core",
+  "name": "@cadence-mq/driver-memory",
   "version": "0.2.3",
-  "description": "Modern, type-safe, and performant task queue for Node.js",
+  "description": "In-memory driver for CadenceMQ",
   "keywords": [
     "cadence",
     "cadence-mq",
     "job-queue",
-    "job-scheduler",
-    "jobs",
-    "task-queue",
-    "tasks"
+    "memory",
+    "task-queue"
   ],
-  "homepage": "https://github.com/papra-hq/cadence-mq/tree/main/packages/core",
-  "bugs": {
-    "url": "https://github.com/papra-hq/cadence-mq/issues"
-  },
   "license": "MIT",
-  "author": "Corentin Thomasset <corentinth@proton.me> (https://corentin.tech)",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/papra-hq/cadence-mq",
-    "directory": "packages/core"
-  },
   "files": [
     "dist"
   ],
@@ -44,17 +32,15 @@
     "test:watch": "vitest watch",
     "prepack": "pnpm build"
   },
-  "dependencies": {
-    "@standard-schema/spec": "^1.1.0",
-    "cron-parser": "^5.10.0"
-  },
   "devDependencies": {
+    "@cadence-mq/core": "workspace:*",
     "@types/node": "^26.4.1",
     "tsdown": "^0.22.14",
     "typescript": "^7.0.2",
-    "valibot": "^1.4.2"
+    "valibot": "^1.4.2",
+    "vitest": "^5.0.0"
   },
-  "engines": {
-    "node": ">=26"
+  "peerDependencies": {
+    "@cadence-mq/core": "workspace:^0.2.3"
   }
 }

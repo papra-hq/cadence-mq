@@ -33,8 +33,10 @@ Run these commands from the repository root:
 ## Repository structure
 
 ```text
-packages/core/  Publishable CadenceMQ package
-docs/           Astro Starlight documentation
+packages/core/           Core contracts, client, and worker
+packages/driver-memory/  In-memory queue driver
+packages/driver-libsql/  Durable LibSQL queue driver
+docs/                    Astro Starlight documentation
 ```
 
 ## Pull requests

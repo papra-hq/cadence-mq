@@ -1,27 +1,16 @@
 {
-  "name": "@cadence-mq/core",
-  "version": "0.2.3",
-  "description": "Modern, type-safe, and performant task queue for Node.js",
+  "name": "@cadence-mq/driver-libsql",
+  "version": "0.2.4",
+  "description": "LibSQL driver for CadenceMQ",
   "keywords": [
     "cadence",
     "cadence-mq",
     "job-queue",
-    "job-scheduler",
-    "jobs",
-    "task-queue",
-    "tasks"
+    "libsql",
+    "sqlite",
+    "task-queue"
   ],
-  "homepage": "https://github.com/papra-hq/cadence-mq/tree/main/packages/core",
-  "bugs": {
-    "url": "https://github.com/papra-hq/cadence-mq/issues"
-  },
   "license": "MIT",
-  "author": "Corentin Thomasset <corentinth@proton.me> (https://corentin.tech)",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/papra-hq/cadence-mq",
-    "directory": "packages/core"
-  },
   "files": [
     "dist"
   ],
@@ -45,14 +34,18 @@
     "prepack": "pnpm build"
   },
   "dependencies": {
-    "@standard-schema/spec": "^1.1.0",
-    "cron-parser": "^5.10.0"
+    "@libsql/client": "^0.18.0"
   },
   "devDependencies": {
+    "@cadence-mq/core": "workspace:*",
     "@types/node": "^26.4.1",
     "tsdown": "^0.22.14",
     "typescript": "^7.0.2",
-    "valibot": "^1.4.2"
+    "valibot": "^1.4.2",
+    "vitest": "^5.0.0"
+  },
+  "peerDependencies": {
+    "@cadence-mq/core": "workspace:^0.2.3"
   },
   "engines": {
     "node": ">=26"

@@ -10,7 +10,6 @@
     "test": "vitest run",
     "test:watch": "vitest watch",
     "check": "oxlint && oxfmt --check",
-    "check:quiet": "oxlint --quiet && oxfmt --check",
     "check:fix": "oxlint --fix && oxfmt"
   },
   "devDependencies": {

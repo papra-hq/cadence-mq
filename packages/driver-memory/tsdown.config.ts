@@ -7,4 +7,7 @@ export default defineConfig({
   dts: {
     generator: 'oxc',
   },
+  deps: {
+    neverBundle: ['@cadence-mq/core'],
+  },
 });
