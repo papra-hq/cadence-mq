@@ -44,6 +44,7 @@ function createClaimDriver(job: ClaimedJob): {
       now: async () => instant,
       insertJob: async () => job,
       getJob: async () => job,
+      pruneJobs: async () => 0,
       claimJobs: async () => [job],
       renewJobLeases: async ({ leases }) => leases.map(({ id }) => id),
       completeJob: async (lease) => {

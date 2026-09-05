@@ -1,5 +1,5 @@
 import type { Driver } from '../driver/driver';
-import type { EnqueueOptions, Job } from '../jobs/job';
+import type { EnqueueOptions, Job, JobStatus, PruneJobsOptions } from '../jobs/job';
 import type { Schedule, ScheduleClient } from '../schedules/schedule';
 import type { JsonValue } from '../shared/json';
 import type { TaskDefinition } from '../tasks/task-definition';
@@ -25,6 +25,7 @@ export type Cadence = {
     options?: EnqueueOptions,
   ): Promise<Job<Payload>>;
   getJob(id: string): Promise<Job | undefined>;
+  pruneJobs(options: PruneJobsOptions): Promise<number>;
   readonly schedules: ScheduleClient;
   createWorker(options: WorkerOptions): Worker;
   close(options?: StopWorkerOptions): Promise<void>;
@@ -149,6 +150,16 @@ export function createCadence({ driver }: CadenceOptions): Cadence {
       await ensureInitialized();
       return driver.getJob(id);
     },
+    pruneJobs: async (options: PruneJobsOptions): Promise<number> => {
+      assertOpen();
+      const before = normalizeInstant(options.before);
+      const statuses = normalizePruneStatuses(options.statuses);
+      const limit = options.limit ?? 1_000;
+      assertPruneLimit(limit);
+
+      await ensureInitialized();
+      return driver.pruneJobs({ before, statuses, limit });
+    },
     schedules,
     createWorker: (options: WorkerOptions): Worker => {
       assertOpen();
@@ -183,4 +194,27 @@ export function createCadence({ driver }: CadenceOptions): Cadence {
       return closePromise;
     },
   };
+}
+
+function normalizePruneStatuses(
+  statuses: PruneJobsOptions['statuses'],
+): ReadonlyArray<Extract<JobStatus, 'succeeded' | 'failed'>> {
+  const normalized: Array<'succeeded' | 'failed'> =
+    statuses === undefined ? ['succeeded', 'failed'] : [...statuses];
+  if (normalized.some((status) => status !== 'succeeded' && status !== 'failed')) {
+    throw createError({
+      code: 'job.invalid-prune-options',
+      message: 'statuses may only contain succeeded and failed',
+    });
+  }
+  return [...new Set(normalized)];
+}
+
+function assertPruneLimit(limit: number): void {
+  if (!Number.isSafeInteger(limit) || limit < 1 || limit > 10_000) {
+    throw createError({
+      code: 'job.invalid-prune-options',
+      message: 'limit must be an integer between 1 and 10,000',
+    });
+  }
 }

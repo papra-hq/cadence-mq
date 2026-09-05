@@ -19,7 +19,13 @@ export type { Awaitable, HandlerContext, HandlerDefinition } from './handlers/ha
 export { defineHandler } from './handlers/handler-definition';
 export { PermanentTaskError } from './handlers/permanent-task-error';
 
-export type { EnqueueOptions, Job, JobStatus, SerializedJobError } from './jobs/job';
+export type {
+  EnqueueOptions,
+  Job,
+  JobStatus,
+  PruneJobsOptions,
+  SerializedJobError,
+} from './jobs/job';
 
 export type {
   CronTrigger,

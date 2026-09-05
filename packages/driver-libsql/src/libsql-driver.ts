@@ -80,6 +80,36 @@ export function createLibsqlDriver({ client }: { client: Client }): Driver {
         const [row] = result.rows;
         return row === undefined ? undefined : toJob(row);
       }),
+    pruneJobs: async ({ before, statuses = ['succeeded', 'failed'], limit = 1_000 }) =>
+      withDriverError('prune-jobs', async () => {
+        assertPruneLimit(limit);
+        const acceptedStatuses = normalizePruneStatuses(statuses);
+        if (acceptedStatuses.length === 0) {
+          return 0;
+        }
+
+        const statusPlaceholders = acceptedStatuses.map(() => '?').join(', ');
+        const cutoff = Temporal.Instant.from(before).epochMilliseconds;
+        const result = await client.execute({
+          sql: `
+            WITH candidates AS MATERIALIZED (
+              SELECT id
+              FROM cadence_jobs
+              WHERE
+                status IN ('succeeded', 'failed')
+                AND status IN (${statusPlaceholders})
+                AND finished_at < ?
+              ORDER BY finished_at, id
+              LIMIT ?
+            )
+            DELETE FROM cadence_jobs
+            WHERE id IN (SELECT id FROM candidates)
+            RETURNING id
+          `,
+          args: [...acceptedStatuses, cutoff, limit],
+        });
+        return result.rows.length;
+      }),
     claimJobs: async ({ taskNames, limit, leaseDurationMs }) =>
       withDriverError('claim-jobs', async () => {
         assertNonNegativeInteger(limit, 'limit');
@@ -525,6 +555,27 @@ function requiredRow(row: Row | undefined, description: string): Row {
     throw new Error(`LibSQL did not return ${description}`);
   }
   return row;
+}
+
+function normalizePruneStatuses(
+  statuses: ReadonlyArray<'succeeded' | 'failed'>,
+): ReadonlyArray<'succeeded' | 'failed'> {
+  if (statuses.some((status) => status !== 'succeeded' && status !== 'failed')) {
+    throw new CadenceError({
+      code: 'driver.invalid-options',
+      message: 'statuses may only contain succeeded and failed',
+    });
+  }
+  return [...new Set(statuses)];
+}
+
+function assertPruneLimit(limit: number): void {
+  if (!Number.isSafeInteger(limit) || limit < 1 || limit > 10_000) {
+    throw new CadenceError({
+      code: 'driver.invalid-options',
+      message: 'limit must be an integer between 1 and 10,000',
+    });
+  }
 }
 
 function assertNonNegativeInteger(value: number, field: string): void {

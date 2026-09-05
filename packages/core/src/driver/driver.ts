@@ -1,4 +1,4 @@
-import type { Job, SerializedJobError } from '../jobs/job';
+import type { Job, PruneJobsOptions, SerializedJobError } from '../jobs/job';
 import type { Schedule } from '../schedules/schedule';
 import type { JsonValue } from '../shared/json';
 import type { RetryPolicy } from '../shared/retry';
@@ -46,6 +46,7 @@ export interface Driver {
 
   insertJob(job: NewJob): Promise<Job>;
   getJob(id: string): Promise<Job | undefined>;
+  pruneJobs(options: PruneJobsOptions): Promise<number>;
 
   claimJobs(options: {
     taskNames: ReadonlyArray<string>;
