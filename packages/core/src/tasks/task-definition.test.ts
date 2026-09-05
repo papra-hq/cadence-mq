@@ -39,6 +39,14 @@ function createRecordingDriver(): {
       completeJob: async () => false,
       retryJob: async () => false,
       failJob: async () => false,
+      upsertSchedule: async () => {
+        throw new Error('not implemented');
+      },
+      getSchedule: async () => undefined,
+      deleteSchedule: async () => false,
+      claimDueSchedules: async () => [],
+      commitScheduleOccurrence: async () => false,
+      releaseScheduleClaim: async () => false,
     },
   };
 }

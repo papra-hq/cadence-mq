@@ -58,6 +58,14 @@ function createClaimDriver(job: ClaimedJob): {
         failures.push(options);
         return true;
       },
+      upsertSchedule: async () => {
+        throw new Error('not implemented');
+      },
+      getSchedule: async () => undefined,
+      deleteSchedule: async () => false,
+      claimDueSchedules: async () => [],
+      commitScheduleOccurrence: async () => false,
+      releaseScheduleClaim: async () => false,
     },
   };
 }

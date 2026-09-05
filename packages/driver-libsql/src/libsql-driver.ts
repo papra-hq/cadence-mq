@@ -1,11 +1,14 @@
 import type {
   ClaimedJob,
+  ClaimedSchedule,
   Driver,
   Job,
   JobStatus,
   JsonValue,
   LeaseRef,
+  NewJob,
   RetryPolicy,
+  Schedule,
   SerializedJobError,
 } from '@cadence-mq/core';
 import type { Client, Config, Row } from '@libsql/client';
@@ -227,10 +230,203 @@ export function createLibsqlDriver({ client }: { client: Client }): Driver {
         });
         return result.rowsAffected === 1;
       }),
+    upsertSchedule: async (schedule) =>
+      withDriverError('upsert-schedule', async () => {
+        const result = await client.execute({
+          sql: `
+            INSERT INTO cadence_schedules (
+              id, task_name, payload, retry_json, cron, time_zone,
+              created_at, updated_at, next_run_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ${nowExpression}, ${nowExpression}, ?)
+            ON CONFLICT(id) DO UPDATE SET
+              task_name = excluded.task_name,
+              payload = excluded.payload,
+              retry_json = excluded.retry_json,
+              next_run_at = CASE
+                WHEN cadence_schedules.cron = excluded.cron
+                  AND cadence_schedules.time_zone = excluded.time_zone
+                THEN cadence_schedules.next_run_at
+                ELSE excluded.next_run_at
+              END,
+              cron = excluded.cron,
+              time_zone = excluded.time_zone,
+              updated_at = ${nowExpression},
+              lease_token = NULL,
+              lease_expires_at = NULL
+            RETURNING *
+          `,
+          args: [
+            schedule.id,
+            schedule.taskName,
+            JSON.stringify(schedule.payload),
+            JSON.stringify(schedule.retry),
+            schedule.trigger.cron,
+            schedule.trigger.timeZone,
+            schedule.nextRunAt.epochMilliseconds,
+          ],
+        });
+        return toSchedule(requiredRow(result.rows[0], 'upserted schedule'));
+      }),
+    getSchedule: async (id) =>
+      withDriverError('get-schedule', async () => {
+        const result = await client.execute({
+          sql: 'SELECT * FROM cadence_schedules WHERE id = ?',
+          args: [id],
+        });
+        const [row] = result.rows;
+        return row === undefined ? undefined : toSchedule(row);
+      }),
+    deleteSchedule: async (id) =>
+      withDriverError('delete-schedule', async () => {
+        const result = await client.execute({
+          sql: 'DELETE FROM cadence_schedules WHERE id = ?',
+          args: [id],
+        });
+        return result.rowsAffected === 1;
+      }),
+    claimDueSchedules: async ({ limit, leaseDurationMs }) =>
+      withDriverError('claim-due-schedules', async () => {
+        assertNonNegativeInteger(limit, 'limit');
+        assertNonNegativeInteger(leaseDurationMs, 'leaseDurationMs');
+        if (limit === 0) {
+          return [];
+        }
+
+        const result = await client.execute({
+          sql: `
+            WITH candidates AS MATERIALIZED (
+              SELECT id
+              FROM cadence_schedules
+              WHERE next_run_at <= ${nowExpression}
+                AND (lease_token IS NULL OR lease_expires_at <= ${nowExpression})
+              ORDER BY next_run_at, id
+              LIMIT ?
+            )
+            UPDATE cadence_schedules
+            SET
+              lease_token = lower(hex(randomblob(16))),
+              lease_expires_at = ${nowExpression} + ?
+            WHERE id IN (SELECT id FROM candidates)
+            RETURNING *, ${nowExpression} AS claimed_at
+          `,
+          args: [limit, leaseDurationMs],
+        });
+        return result.rows.map(toClaimedSchedule).sort(compareClaimedSchedules);
+      }),
+    commitScheduleOccurrence: async ({ lease: { id, token }, job, nextRunAt }) =>
+      withDriverError('commit-schedule-occurrence', async () => {
+        if (job.schedule?.id !== id) {
+          throw new CadenceError({
+            code: 'schedule.invalid-occurrence',
+            message: 'The occurrence job does not belong to the claimed schedule',
+          });
+        }
+
+        const [, update] = await client.batch(
+          [
+            insertScheduleOccurrenceStatement(job, nowExpression, { id, token }),
+            {
+              sql: `
+                UPDATE cadence_schedules
+                SET
+                  next_run_at = ?,
+                  last_materialized_at = ?,
+                  updated_at = ${nowExpression},
+                  lease_token = NULL,
+                  lease_expires_at = NULL
+                WHERE id = ? AND lease_token = ?
+              `,
+              args: [
+                nextRunAt.epochMilliseconds,
+                job.schedule.occurrenceAt.epochMilliseconds,
+                id,
+                token,
+              ],
+            },
+          ],
+          'write',
+        );
+        if (update === undefined) {
+          throw new Error('LibSQL did not return a schedule update result');
+        }
+        return update.rowsAffected === 1;
+      }),
+    releaseScheduleClaim: async ({ id, token }) =>
+      withDriverError('release-schedule-claim', async () => {
+        const result = await client.execute({
+          sql: `
+            UPDATE cadence_schedules
+            SET lease_token = NULL, lease_expires_at = NULL
+            WHERE id = ? AND lease_token = ?
+          `,
+          args: [id, token],
+        });
+        return result.rowsAffected === 1;
+      }),
   };
 }
 
 export const createLibSqlDriver: typeof createLibsqlDriver = createLibsqlDriver;
+
+function insertScheduleOccurrenceStatement(job: NewJob, nowExpression: string, lease: LeaseRef) {
+  return {
+    sql: `
+      INSERT INTO cadence_jobs (
+        id, task_name, payload, status, attempts, retry_json, max_attempts,
+        created_at, available_at, schedule_id, schedule_occurrence_at
+      )
+      SELECT ?, ?, ?, 'pending', 0, ?, ?, ${nowExpression}, ?, ?, ?
+      WHERE EXISTS (
+        SELECT 1 FROM cadence_schedules WHERE id = ? AND lease_token = ?
+      )
+    `,
+    args: [
+      job.id,
+      job.taskName,
+      JSON.stringify(job.payload),
+      JSON.stringify(job.retry),
+      job.retry.maxAttempts,
+      job.availableAt.epochMilliseconds,
+      job.schedule?.id ?? null,
+      job.schedule?.occurrenceAt.epochMilliseconds ?? null,
+      lease.id,
+      lease.token,
+    ],
+  };
+}
+
+function toSchedule(row: Row): Schedule {
+  return {
+    id: requiredString(row.id, 'id'),
+    taskName: requiredString(row.task_name, 'task_name'),
+    payload: parseJson<JsonValue>(row.payload, 'payload'),
+    retry: parseJson<RetryPolicy>(row.retry_json, 'retry_json'),
+    trigger: {
+      cron: requiredString(row.cron, 'cron'),
+      timeZone: requiredString(row.time_zone, 'time_zone'),
+    },
+    createdAt: toInstant(row.created_at),
+    updatedAt: toInstant(row.updated_at),
+    nextRunAt: toInstant(row.next_run_at),
+    ...(row.last_materialized_at === null
+      ? {}
+      : { lastMaterializedAt: toInstant(row.last_materialized_at) }),
+  };
+}
+
+function toClaimedSchedule(row: Row): ClaimedSchedule {
+  return {
+    ...toSchedule(row),
+    leaseToken: requiredString(row.lease_token, 'lease_token'),
+    leaseExpiresAt: toInstant(row.lease_expires_at),
+    claimedAt: toInstant(row.claimed_at),
+  };
+}
+
+function compareClaimedSchedules(left: ClaimedSchedule, right: ClaimedSchedule): number {
+  const nextRun = Temporal.Instant.compare(left.nextRunAt, right.nextRunAt);
+  return nextRun === 0 ? left.id.localeCompare(right.id) : nextRun;
+}
 
 function toJob(row: Row): Job {
   const status = toStatus(row.status);
