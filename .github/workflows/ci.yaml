@@ -25,9 +25,6 @@ jobs:
       - name: Install dependencies
         run: pnpm i --frozen-lockfile
 
-      - name: Generate astro types
-        run: pnpm --filter @cadence-mq/docs astro sync
-
       - name: Run quality checks
         run: pnpm check
 
@@ -36,6 +33,3 @@ jobs:
 
       - name: Run tests
         run: pnpm test
-
-      - name: Build documentation
-        run: pnpm --filter @cadence-mq/docs build

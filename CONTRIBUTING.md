@@ -27,8 +27,6 @@ Run these commands from the repository root:
 - `pnpm test:watch` — run package tests in watch mode
 - `pnpm build:packages` — build publishable packages
 - `pnpm build:packages:watch` — build publishable packages in watch mode
-- `pnpm --filter @cadence-mq/docs dev` — start the documentation site
-- `pnpm --filter @cadence-mq/docs build` — build the documentation site
 
 ## Repository structure
 
@@ -36,7 +34,6 @@ Run these commands from the repository root:
 packages/core/           Core contracts, client, and worker
 packages/driver-memory/  In-memory queue driver
 packages/driver-libsql/  Durable LibSQL queue driver
-docs/                    Astro Starlight documentation
 ```
 
 ## Pull requests
@@ -47,7 +44,7 @@ Before opening a pull request:
 2. Run `pnpm test`.
 3. Run `pnpm build:packages`.
 4. Add tests for new behavior.
-5. Update documentation when the public contract changes.
+5. Update the relevant package README when behavior changes.
 
 Keep changes focused. Do not introduce a new public API or architectural direction without discussing it first.
 
