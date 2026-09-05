@@ -30,6 +30,25 @@ await worker.start();
 await cadence.close();
 ```
 
+## Testing a driver
+
+Driver implementations can run the shared high-level behavioral suite from the dedicated test
+entry point:
+
+```ts
+import { runDriverTestSuite } from '@cadence-mq/core/driver-test';
+import { describe } from 'vitest';
+
+describe('custom driver', () => {
+  runDriverTestSuite({
+    createDriver: () => createCustomDriver(),
+  });
+});
+```
+
+The factory must return a fresh, isolated driver for each test. The suite closes each driver when
+the scenario finishes.
+
 ## License
 
 [MIT](./LICENSE)

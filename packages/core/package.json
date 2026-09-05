@@ -29,6 +29,7 @@
   "types": "./dist/index.d.mts",
   "exports": {
     ".": "./dist/index.mjs",
+    "./driver-test": "./dist/driver-test.mjs",
     "./package.json": "./package.json"
   },
   "publishConfig": {
@@ -52,7 +53,16 @@
     "@types/node": "^26.4.1",
     "tsdown": "^0.22.14",
     "typescript": "^7.0.2",
-    "valibot": "^1.4.2"
+    "valibot": "^1.4.2",
+    "vitest": "^5.0.0"
+  },
+  "peerDependencies": {
+    "vitest": "^5.0.0"
+  },
+  "peerDependenciesMeta": {
+    "vitest": {
+      "optional": true
+    }
   },
   "engines": {
     "node": ">=26"
