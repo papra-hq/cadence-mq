@@ -69,6 +69,92 @@ describe('memory worker lifecycle', () => {
     expect(await cadence.getJob(job.id)).toMatchObject({ status: 'succeeded', attempts: 1 });
   });
 
+  test('a heartbeat failure aborts execution before its lease can be reclaimed', async () => {
+    const clock = createControlledClock({ now: start });
+    const backingDriver = memory({ clock });
+    const handlerStarted = Promise.withResolvers<void>();
+    const handlerAborted = Promise.withResolvers<void>();
+    const renewalSucceeded = Promise.withResolvers<void>();
+    const renewalFailed = Promise.withResolvers<void>();
+    let renewalCalls = 0;
+    let handlerSignal: AbortSignal | undefined;
+    const driver: Driver = {
+      ...backingDriver,
+      renewJobLeases: async (options) => {
+        renewalCalls += 1;
+        if (renewalCalls === 1) {
+          const renewedIds = await backingDriver.renewJobLeases(options);
+          renewalSucceeded.resolve();
+          return renewedIds;
+        }
+
+        renewalFailed.resolve();
+        throw new Error('heartbeat unavailable');
+      },
+    };
+    const task = defineTask({
+      name: 'heartbeat.failed-renewal',
+      schema: v.null(),
+      retry: { maxAttempts: 2 },
+    });
+    const cadence = createCadence({ driver });
+    const worker = cadence.createWorker({
+      handlers: [
+        defineHandler(task, async (_payload, { signal }) => {
+          handlerSignal = signal;
+          handlerStarted.resolve();
+          await new Promise<never>((_resolve, reject) => {
+            signal.addEventListener(
+              'abort',
+              () => {
+                handlerAborted.resolve();
+                reject(signal.reason);
+              },
+              { once: true },
+            );
+          });
+        }),
+      ],
+      pollingIntervalMs: 100,
+      leaseDurationMs: 30,
+      heartbeatIntervalMs: 10,
+      scheduler: clock,
+    });
+    const job = await cadence.enqueue(task, null);
+
+    await worker.start();
+    await handlerStarted.promise;
+    clock.advanceBy({ milliseconds: 10 });
+    await renewalSucceeded.promise;
+    await Promise.resolve();
+    clock.advanceBy({ milliseconds: 10 });
+    await renewalFailed.promise;
+
+    clock.advanceBy({ milliseconds: 19 });
+    await Promise.resolve();
+    expect(handlerSignal?.aborted).toBe(false);
+    expect(
+      await backingDriver.claimJobs({
+        taskNames: [task.name],
+        limit: 1,
+        leaseDurationMs: 30,
+      }),
+    ).toEqual([]);
+
+    clock.advanceBy({ milliseconds: 1 });
+    await handlerAborted.promise;
+    expect(handlerSignal?.reason).toMatchObject({ code: 'job.stale-lease' });
+    await expect(
+      backingDriver.claimJobs({
+        taskNames: [task.name],
+        limit: 1,
+        leaseDurationMs: 30,
+      }),
+    ).resolves.toMatchObject([{ id: job.id, attempts: 2 }]);
+
+    await worker.stop({ gracePeriodMs: 0 });
+  });
+
   test('a lost lease aborts only its associated handler', async () => {
     const clock = createControlledClock({ now: start });
     const backingDriver = memory({ clock });
@@ -280,6 +366,7 @@ describe('memory worker lifecycle', () => {
     const renewalStarted = Promise.withResolvers<void>();
     const finishRenewal = Promise.withResolvers<void>();
     const renewalFinished = Promise.withResolvers<void>();
+    const leaseDeadlineSignals: AbortSignal[] = [];
     const driver: Driver = {
       ...backingDriver,
       renewJobLeases: async (options) => {
@@ -307,7 +394,14 @@ describe('memory worker lifecycle', () => {
       pollingIntervalMs: 100,
       leaseDurationMs: 30,
       heartbeatIntervalMs: 10,
-      scheduler: clock,
+      scheduler: {
+        sleep: async (durationMs, signal) => {
+          if (durationMs === 30 && signal !== undefined) {
+            leaseDeadlineSignals.push(signal);
+          }
+          return clock.sleep(durationMs, signal);
+        },
+      },
     });
     const job = await cadence.enqueue(task, null);
 
@@ -315,10 +409,12 @@ describe('memory worker lifecycle', () => {
     await handlerStarted.promise;
     clock.advanceBy({ milliseconds: 10 });
     await renewalStarted.promise;
+    expect(leaseDeadlineSignals).toHaveLength(2);
 
     const stopping = worker.stop({ gracePeriodMs: 5 });
     clock.advanceBy({ milliseconds: 5 });
     await Promise.all([handlerAborted.promise, stopping]);
+    expect(leaseDeadlineSignals.every(({ aborted }) => aborted)).toBe(true);
     expect(await cadence.getJob(job.id)).toMatchObject({
       status: 'pending',
       lastError: { code: 'job.worker-shutdown' },
@@ -334,6 +430,7 @@ describe('memory worker lifecycle', () => {
     const claimStarted = Promise.withResolvers<void>();
     const finishClaim = Promise.withResolvers<void>();
     const claimFinished = Promise.withResolvers<void>();
+    const leaseDeadlineSignals: AbortSignal[] = [];
     const driver: Driver = {
       ...backingDriver,
       claimJobs: async (options) => {
@@ -351,15 +448,24 @@ describe('memory worker lifecycle', () => {
       pollingIntervalMs: 100,
       leaseDurationMs: 30,
       heartbeatIntervalMs: 10,
-      scheduler: clock,
+      scheduler: {
+        sleep: async (durationMs, signal) => {
+          if (durationMs === 30 && signal !== undefined) {
+            leaseDeadlineSignals.push(signal);
+          }
+          return clock.sleep(durationMs, signal);
+        },
+      },
     });
 
     await worker.start();
     await claimStarted.promise;
+    expect(leaseDeadlineSignals).toHaveLength(1);
     const stopping = worker.stop({ gracePeriodMs: 5 });
     clock.advanceBy({ milliseconds: 5 });
 
     await stopping;
+    expect(leaseDeadlineSignals[0]?.aborted).toBe(true);
     expect(worker.state).toBe('stopped');
     finishClaim.resolve();
     await claimFinished.promise;

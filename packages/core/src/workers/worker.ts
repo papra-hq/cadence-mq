@@ -37,7 +37,14 @@ type ActiveExecution = {
   job: ClaimedJob;
   controller: AbortController;
   leaseState: 'current' | 'stale' | 'releasing';
+  leaseDeadline: LeaseDeadline | undefined;
   completion: Promise<void>;
+};
+
+type LeaseDeadline = {
+  controller: AbortController;
+  executions: Set<ActiveExecution>;
+  expired: boolean;
 };
 
 const shutdownJobError: SerializedJobError = {
@@ -83,6 +90,7 @@ export function createWorker({
   const heartbeatController = new AbortController();
   const activeExecutions = new Map<string, ActiveExecution>();
   const activeScheduleMaterializations = new Set<Promise<void>>();
+  const leaseDeadlines = new Set<LeaseDeadline>();
 
   const releaseClaim = async (job: ClaimedJob): Promise<void> => {
     try {
@@ -103,18 +111,94 @@ export function createWorker({
     }
   };
 
+  const cancelLeaseDeadline = (deadline: LeaseDeadline): void => {
+    deadline.controller.abort();
+    leaseDeadlines.delete(deadline);
+  };
+
+  const detachLeaseDeadline = (execution: ActiveExecution): void => {
+    const deadline = execution.leaseDeadline;
+    if (deadline === undefined) {
+      return;
+    }
+
+    execution.leaseDeadline = undefined;
+    deadline.executions.delete(execution);
+    if (deadline.executions.size === 0 && !deadline.expired) {
+      cancelLeaseDeadline(deadline);
+    }
+  };
+
   const markLeaseStale = (execution: ActiveExecution): void => {
     if (execution.leaseState !== 'current') {
       return;
     }
 
     execution.leaseState = 'stale';
+    detachLeaseDeadline(execution);
     execution.controller.abort(
       createError({
         code: 'job.stale-lease',
         message: `The lease for job ${execution.job.id} is no longer current`,
       }),
     );
+  };
+
+  const expireLeaseDeadline = (deadline: LeaseDeadline): void => {
+    if (deadline.expired || deadline.controller.signal.aborted) {
+      return;
+    }
+
+    deadline.expired = true;
+    leaseDeadlines.delete(deadline);
+    for (const execution of [...deadline.executions]) {
+      if (execution.leaseDeadline === deadline) {
+        markLeaseStale(execution);
+      }
+    }
+  };
+
+  const createLeaseDeadline = (): LeaseDeadline => {
+    const deadline: LeaseDeadline = {
+      controller: new AbortController(),
+      executions: new Set(),
+      expired: false,
+    };
+    leaseDeadlines.add(deadline);
+
+    // Start before driver I/O so request latency cannot extend the locally trusted lease.
+    try {
+      void scheduler.sleep(leaseDurationMs, deadline.controller.signal).then(
+        () => expireLeaseDeadline(deadline),
+        (error: unknown) => {
+          if (!deadline.controller.signal.aborted) {
+            reportError(error, options.onError);
+            expireLeaseDeadline(deadline);
+          }
+        },
+      );
+    } catch (error) {
+      reportError(error, options.onError);
+      expireLeaseDeadline(deadline);
+    }
+
+    return deadline;
+  };
+
+  const attachLeaseDeadline = (execution: ActiveExecution, deadline: LeaseDeadline): void => {
+    detachLeaseDeadline(execution);
+    execution.leaseDeadline = deadline;
+    deadline.executions.add(execution);
+
+    if (deadline.expired || deadline.controller.signal.aborted) {
+      markLeaseStale(execution);
+    }
+  };
+
+  const cancelUnusedLeaseDeadline = (deadline: LeaseDeadline): void => {
+    if (deadline.executions.size === 0) {
+      cancelLeaseDeadline(deadline);
+    }
   };
 
   const execute = async (execution: ActiveExecution, handler: HandlerDefinition): Promise<void> => {
@@ -144,13 +228,14 @@ export function createWorker({
     } catch (error) {
       reportError(error, options.onError);
     } finally {
+      detachLeaseDeadline(execution);
       if (activeExecutions.get(execution.key) === execution) {
         activeExecutions.delete(execution.key);
       }
     }
   };
 
-  const startExecution = (job: ClaimedJob): void => {
+  const startExecution = (job: ClaimedJob, leaseDeadline: LeaseDeadline): void => {
     const handler = handlers.get(job.taskName);
     if (handler === undefined) {
       reportError(
@@ -168,9 +253,11 @@ export function createWorker({
       job,
       controller: new AbortController(),
       leaseState: 'current',
+      leaseDeadline: undefined,
       completion: Promise.resolve(),
     };
     activeExecutions.set(execution.key, execution);
+    attachLeaseDeadline(execution, leaseDeadline);
     execution.completion = execute(execution, handler);
   };
 
@@ -180,6 +267,7 @@ export function createWorker({
     while (!signal.aborted) {
       const availableSlots = concurrency - activeExecutions.size;
       if (availableSlots > 0) {
+        const leaseDeadline = createLeaseDeadline();
         try {
           const jobs = await driver.claimJobs({
             taskNames: [...handlers.keys()],
@@ -187,22 +275,26 @@ export function createWorker({
             leaseDurationMs,
           });
 
-          if (signal.aborted) {
+          if (signal.aborted || leaseDeadline.expired) {
             await Promise.all(jobs.map(releaseClaim));
-            break;
-          }
-
-          for (const job of jobs) {
             if (signal.aborted) {
-              await releaseClaim(job);
-            } else {
-              startExecution(job);
+              break;
+            }
+          } else {
+            for (const job of jobs) {
+              if (signal.aborted) {
+                await releaseClaim(job);
+              } else {
+                startExecution(job, leaseDeadline);
+              }
             }
           }
         } catch (error) {
           if (!signal.aborted) {
             reportError(error, options.onError);
           }
+        } finally {
+          cancelUnusedLeaseDeadline(leaseDeadline);
         }
       }
 
@@ -291,6 +383,7 @@ export function createWorker({
         continue;
       }
 
+      const leaseDeadline = createLeaseDeadline();
       try {
         const renewedIds = new Set(
           await driver.renewJobLeases({
@@ -301,10 +394,15 @@ export function createWorker({
 
         for (const execution of executions) {
           if (
-            activeExecutions.get(execution.key) === execution &&
-            execution.leaseState === 'current' &&
-            !renewedIds.has(execution.job.id)
+            activeExecutions.get(execution.key) !== execution ||
+            execution.leaseState !== 'current'
           ) {
+            continue;
+          }
+
+          if (renewedIds.has(execution.job.id)) {
+            attachLeaseDeadline(execution, leaseDeadline);
+          } else {
             markLeaseStale(execution);
           }
         }
@@ -312,6 +410,9 @@ export function createWorker({
         if (!signal.aborted) {
           reportError(error, options.onError);
         }
+        // Keep each execution on its last confirmed deadline after an ambiguous failure.
+      } finally {
+        cancelUnusedLeaseDeadline(leaseDeadline);
       }
     }
   };
@@ -380,6 +481,7 @@ export function createWorker({
       for (const execution of remainingExecutions) {
         if (execution.leaseState === 'current') {
           execution.leaseState = 'releasing';
+          detachLeaseDeadline(execution);
         }
         execution.controller.abort(
           createError({
@@ -450,7 +552,11 @@ export function createWorker({
         graceController.abort();
         heartbeatController.abort();
         for (const execution of activeExecutions.values()) {
+          detachLeaseDeadline(execution);
           execution.controller.abort();
+        }
+        for (const deadline of [...leaseDeadlines]) {
+          cancelLeaseDeadline(deadline);
         }
         activeExecutions.clear();
         state = 'stopped';
