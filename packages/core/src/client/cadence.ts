@@ -1,10 +1,13 @@
 import type { Driver } from '../driver/driver';
 import type { EnqueueOptions, Job } from '../jobs/job';
+import type { Schedule, ScheduleClient } from '../schedules/schedule';
 import type { JsonValue } from '../shared/json';
 import type { TaskDefinition } from '../tasks/task-definition';
 import type { StopWorkerOptions, Worker, WorkerOptions } from '../workers/worker';
 import { randomUUID } from 'node:crypto';
 import { createError } from '../../errors/errors.models';
+import { getNextExecutionDate } from '../cron/cron';
+import { assertScheduleId } from '../schedules/schedule';
 import { cloneJsonValue } from '../shared/json';
 import { cloneRetryPolicy } from '../shared/retry';
 import { normalizeInstant } from '../shared/instant';
@@ -22,6 +25,7 @@ export type Cadence = {
     options?: EnqueueOptions,
   ): Promise<Job<Payload>>;
   getJob(id: string): Promise<Job | undefined>;
+  readonly schedules: ScheduleClient;
   createWorker(options: WorkerOptions): Worker;
   close(options?: StopWorkerOptions): Promise<void>;
 };
@@ -61,6 +65,61 @@ export function createCadence({ driver }: CadenceOptions): Cadence {
     }
   };
 
+  const schedules: ScheduleClient = {
+    upsert: async <Name extends string, Input, Payload extends JsonValue>({
+      id,
+      task,
+      payload,
+      trigger,
+    }: {
+      id: string;
+      task: TaskDefinition<Name, Input, Payload>;
+      payload: NoInfer<Input>;
+      trigger: { cron: string; timeZone?: string };
+    }): Promise<Schedule<Payload>> => {
+      assertOpen();
+      assertScheduleId(id);
+      const normalizedTrigger = { cron: trigger.cron, timeZone: trigger.timeZone ?? 'UTC' };
+      const validatedPayload = cloneJsonValue(validatePayload(task.schema, payload));
+      const retry = cloneRetryPolicy(task.retry);
+
+      // Parse before any asynchronous driver operation so invalid configuration cannot mutate storage.
+      getNextExecutionDate(normalizedTrigger.cron, {
+        after: Temporal.Instant.fromEpochMilliseconds(0),
+        timeZone: normalizedTrigger.timeZone,
+        hashSeed: id,
+      });
+
+      await ensureInitialized();
+      const now = normalizeInstant(await driver.now());
+      const nextRunAt = getNextExecutionDate(normalizedTrigger.cron, {
+        after: now,
+        timeZone: normalizedTrigger.timeZone,
+        hashSeed: id,
+      });
+      return (await driver.upsertSchedule({
+        id,
+        taskName: task.name,
+        payload: validatedPayload,
+        retry,
+        trigger: normalizedTrigger,
+        nextRunAt,
+      })) as Schedule<Payload>;
+    },
+    get: async (id): Promise<Schedule | undefined> => {
+      assertOpen();
+      assertScheduleId(id);
+      await ensureInitialized();
+      return driver.getSchedule(id);
+    },
+    delete: async (id): Promise<boolean> => {
+      assertOpen();
+      assertScheduleId(id);
+      await ensureInitialized();
+      return driver.deleteSchedule(id);
+    },
+  };
+
   return {
     enqueue: async <Name extends string, Input, Payload extends JsonValue>(
       task: TaskDefinition<Name, Input, Payload>,
@@ -90,6 +149,7 @@ export function createCadence({ driver }: CadenceOptions): Cadence {
       await ensureInitialized();
       return driver.getJob(id);
     },
+    schedules,
     createWorker: (options: WorkerOptions): Worker => {
       assertOpen();
       const worker = createWorker({ driver, ensureInitialized, options });

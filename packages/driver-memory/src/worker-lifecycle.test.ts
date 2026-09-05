@@ -365,6 +365,63 @@ describe('memory worker lifecycle', () => {
     await claimFinished.promise;
   });
 
+  test('grace expiry waits for an in-flight schedule materialization', async () => {
+    const clock = createControlledClock({ now: start });
+    const backingDriver = memory({ clock });
+    const commitStarted = Promise.withResolvers<void>();
+    const finishCommit = Promise.withResolvers<void>();
+    const handlerStarted = Promise.withResolvers<void>();
+    const handlerAborted = Promise.withResolvers<void>();
+    const driver: Driver = {
+      ...backingDriver,
+      commitScheduleOccurrence: async (options) => {
+        commitStarted.resolve();
+        await finishCommit.promise;
+        return backingDriver.commitScheduleOccurrence(options);
+      },
+    };
+    const task = defineTask({ name: 'shutdown.schedule', schema: v.null() });
+    const cadence = createCadence({ driver });
+    await backingDriver.upsertSchedule({
+      id: 'shutdown.schedule',
+      taskName: task.name,
+      payload: null,
+      retry: task.retry,
+      trigger: { cron: '* * * * *', timeZone: 'UTC' },
+      nextRunAt: start,
+    });
+    await cadence.enqueue(task, null);
+    const worker = cadence.createWorker({
+      handlers: [
+        defineHandler(task, async (_payload, { signal }) => {
+          handlerStarted.resolve();
+          signal.addEventListener('abort', () => handlerAborted.resolve(), { once: true });
+          await new Promise<never>(() => {});
+        }),
+      ],
+      pollingIntervalMs: 100,
+      leaseDurationMs: 30,
+      heartbeatIntervalMs: 10,
+      scheduler: clock,
+    });
+
+    await worker.start();
+    await Promise.all([handlerStarted.promise, commitStarted.promise]);
+    const stopping = worker.stop({ gracePeriodMs: 5 });
+    let stopped = false;
+    void stopping.then(() => {
+      stopped = true;
+    });
+    clock.advanceBy({ milliseconds: 5 });
+    await handlerAborted.promise;
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    expect(stopped).toBe(false);
+
+    finishCommit.resolve();
+    await stopping;
+    expect(worker.state).toBe('stopped');
+  });
+
   test('client close stops all workers before closing the driver and is idempotent', async () => {
     const clock = createControlledClock({ now: start });
     const backingDriver = memory({ clock });

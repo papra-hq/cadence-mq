@@ -6,6 +6,7 @@ import type { CadenceError } from '../../errors/errors.models';
 import { createError, isCadenceError } from '../../errors/errors.models';
 import { systemClock } from '../clock/system-clock';
 import { getHandlerInternals } from '../handlers/handler-definition';
+import { materializeSchedule } from '../schedules/materialize-schedule';
 import { executeClaimedJobHandler, transitionClaimedJob } from './worker-operation';
 
 export type WorkerOptions = {
@@ -76,10 +77,12 @@ export function createWorker({
   let startPromise: Promise<void> | undefined;
   let stopPromise: Promise<void> | undefined;
   let pollingLoop: Promise<void> | undefined;
+  let schedulePollingLoop: Promise<void> | undefined;
   let heartbeatLoop: Promise<void> | undefined;
   const pollingController = new AbortController();
   const heartbeatController = new AbortController();
   const activeExecutions = new Map<string, ActiveExecution>();
+  const activeScheduleMaterializations = new Set<Promise<void>>();
 
   const releaseClaim = async (job: ClaimedJob): Promise<void> => {
     try {
@@ -213,6 +216,59 @@ export function createWorker({
     }
   };
 
+  const pollSchedules = async (): Promise<void> => {
+    const { signal } = pollingController;
+
+    while (!signal.aborted) {
+      try {
+        const schedules = await driver.claimDueSchedules({
+          limit: Math.max(1, concurrency),
+          leaseDurationMs,
+        });
+        if (signal.aborted) {
+          await Promise.all(
+            schedules.map(async ({ id, leaseToken }) => {
+              await driver.releaseScheduleClaim({ id, token: leaseToken });
+            }),
+          );
+          break;
+        }
+
+        await Promise.all(
+          schedules.map(async (schedule) => {
+            const operation = (async (): Promise<void> => {
+              try {
+                await materializeSchedule(driver, schedule);
+              } catch (error) {
+                if (!signal.aborted) {
+                  reportError(error, options.onError);
+                }
+              }
+            })();
+            activeScheduleMaterializations.add(operation);
+            operation.then(
+              () => activeScheduleMaterializations.delete(operation),
+              () => activeScheduleMaterializations.delete(operation),
+            );
+            return operation;
+          }),
+        );
+      } catch (error) {
+        if (!signal.aborted) {
+          reportError(error, options.onError);
+        }
+      }
+
+      try {
+        await scheduler.sleep(pollingIntervalMs, signal);
+      } catch (error) {
+        if (!signal.aborted) {
+          reportError(error, options.onError);
+        }
+      }
+    }
+  };
+
   const heartbeat = async (): Promise<void> => {
     const { signal } = heartbeatController;
 
@@ -290,6 +346,7 @@ export function createWorker({
       }
 
       pollingLoop = poll();
+      schedulePollingLoop = pollSchedules();
       heartbeatLoop = heartbeat();
     })();
     return startPromise;
@@ -367,21 +424,27 @@ export function createWorker({
 
         if (handlerOutcome === 'expired') {
           await expiryWork;
-          return;
+        } else {
+          heartbeatController.abort();
         }
 
-        heartbeatController.abort();
-        const infrastructure = Promise.allSettled(
-          [startPromise, pollingLoop, heartbeatLoop].filter(
-            (operation): operation is Promise<void> => operation !== undefined,
-          ),
-        ).then(() => 'settled' as const);
-        const infrastructureOutcome = await Promise.race([infrastructure, graceDeadline]);
+        // Schedule commits cannot be cancelled once handed to a driver. Keep the worker and
+        // client alive until every commit that began before polling was aborted has settled.
+        await Promise.allSettled([...activeScheduleMaterializations]);
 
-        if (infrastructureOutcome === 'expired') {
-          await expiryWork;
-        } else {
-          graceController.abort();
+        if (handlerOutcome === 'completed') {
+          const infrastructure = Promise.allSettled(
+            [startPromise, pollingLoop, schedulePollingLoop, heartbeatLoop].filter(
+              (operation): operation is Promise<void> => operation !== undefined,
+            ),
+          ).then(() => 'settled' as const);
+          const infrastructureOutcome = await Promise.race([infrastructure, graceDeadline]);
+
+          if (infrastructureOutcome === 'expired') {
+            await expiryWork;
+          } else {
+            graceController.abort();
+          }
         }
       } finally {
         graceController.abort();

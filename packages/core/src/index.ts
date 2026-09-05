@@ -6,13 +6,27 @@ export type { ControlledClock } from './clock/controlled-clock';
 export { createControlledClock } from './clock/controlled-clock';
 export { systemClock } from './clock/system-clock';
 
-export type { ClaimedJob, Driver, LeaseRef, NewJob } from './driver/driver';
+export type {
+  ClaimedJob,
+  ClaimedSchedule,
+  Driver,
+  LeaseRef,
+  NewJob,
+  ScheduleUpsert,
+} from './driver/driver';
 
 export type { Awaitable, HandlerContext, HandlerDefinition } from './handlers/handler-definition';
 export { defineHandler } from './handlers/handler-definition';
 export { PermanentTaskError } from './handlers/permanent-task-error';
 
 export type { EnqueueOptions, Job, JobStatus, SerializedJobError } from './jobs/job';
+
+export type {
+  CronTrigger,
+  Schedule,
+  ScheduleClient,
+  UpsertScheduleOptions,
+} from './schedules/schedule';
 
 export type { JsonPrimitive, JsonValue } from './shared/json';
 export type { ExponentialBackoff, FixedBackoff, RetryPolicy } from './shared/retry';

@@ -1,5 +1,6 @@
 import type {
   ClaimedJob,
+  ClaimedSchedule,
   Clock,
   Driver,
   Job,
@@ -7,11 +8,17 @@ import type {
   LeaseRef,
   NewJob,
   RetryPolicy,
+  Schedule,
 } from '@cadence-mq/core';
 import { randomUUID } from 'node:crypto';
 import { CadenceError, systemClock } from '@cadence-mq/core';
 
 type StoredJob = Job & {
+  leaseToken?: string;
+  leaseExpiresAt?: Temporal.Instant;
+};
+
+type StoredSchedule = Schedule & {
   leaseToken?: string;
   leaseExpiresAt?: Temporal.Instant;
 };
@@ -22,6 +29,8 @@ export type MemoryDriverOptions = {
 
 export function memory({ clock = systemClock }: MemoryDriverOptions = {}): Driver {
   const jobs = new Map<string, StoredJob>();
+  const schedules = new Map<string, StoredSchedule>();
+  const occurrences = new Set<string>();
 
   const readNow = (): Temporal.Instant => normalizeInstant(clock.now());
 
@@ -35,6 +44,13 @@ export function memory({ clock = systemClock }: MemoryDriverOptions = {}): Drive
         throw new CadenceError({
           code: 'job.id-conflict',
           message: `A job with ID ${newJob.id} already exists`,
+        });
+      }
+      const occurrenceKey = getOccurrenceKey(newJob);
+      if (occurrenceKey !== undefined && occurrences.has(occurrenceKey)) {
+        throw new CadenceError({
+          code: 'schedule.occurrence-conflict',
+          message: 'A job already exists for this schedule occurrence',
         });
       }
 
@@ -51,6 +67,9 @@ export function memory({ clock = systemClock }: MemoryDriverOptions = {}): Drive
       };
 
       jobs.set(job.id, job);
+      if (occurrenceKey !== undefined) {
+        occurrences.add(occurrenceKey);
+      }
       return cloneJob(job);
     },
     getJob: async (id) => {
@@ -152,10 +171,131 @@ export function memory({ clock = systemClock }: MemoryDriverOptions = {}): Drive
       clearLease(job);
       return true;
     },
+    upsertSchedule: async (upsert) => {
+      const now = readNow();
+      const existing = schedules.get(upsert.id);
+      const triggerChanged =
+        existing === undefined ||
+        existing.trigger.cron !== upsert.trigger.cron ||
+        existing.trigger.timeZone !== upsert.trigger.timeZone;
+      const schedule: StoredSchedule = {
+        id: upsert.id,
+        taskName: upsert.taskName,
+        payload: clonePayload(upsert.payload),
+        retry: cloneRetry(upsert.retry),
+        trigger: { ...upsert.trigger },
+        createdAt: existing?.createdAt ?? now,
+        updatedAt: now,
+        nextRunAt: triggerChanged ? normalizeInstant(upsert.nextRunAt) : existing.nextRunAt,
+        ...(existing?.lastMaterializedAt === undefined
+          ? {}
+          : { lastMaterializedAt: existing.lastMaterializedAt }),
+      };
+      schedules.set(schedule.id, schedule);
+      return cloneStoredSchedule(schedule);
+    },
+    getSchedule: async (id) => {
+      const schedule = schedules.get(id);
+      return schedule === undefined ? undefined : cloneStoredSchedule(schedule);
+    },
+    deleteSchedule: async (id) => schedules.delete(id),
+    claimDueSchedules: async ({ limit, leaseDurationMs }) => {
+      assertNonNegativeInteger(limit, 'limit');
+      assertNonNegativeInteger(leaseDurationMs, 'leaseDurationMs');
+      if (limit === 0) {
+        return [];
+      }
+
+      const now = readNow();
+      return [...schedules.values()]
+        .filter(
+          (schedule) =>
+            Temporal.Instant.compare(schedule.nextRunAt, now) <= 0 &&
+            (schedule.leaseExpiresAt === undefined ||
+              Temporal.Instant.compare(schedule.leaseExpiresAt, now) <= 0),
+        )
+        .sort(compareSchedules)
+        .slice(0, limit)
+        .map((schedule) => {
+          schedule.leaseToken = randomUUID();
+          schedule.leaseExpiresAt = now.add({ milliseconds: leaseDurationMs });
+          return cloneClaimedSchedule(schedule, now);
+        });
+    },
+    commitScheduleOccurrence: async ({ lease: { id, token }, job, nextRunAt }) => {
+      const schedule = schedules.get(id);
+      if (schedule?.leaseToken !== token) {
+        return false;
+      }
+      if (job.schedule?.id !== id) {
+        throw new CadenceError({
+          code: 'schedule.invalid-occurrence',
+          message: 'The occurrence job does not belong to the claimed schedule',
+        });
+      }
+
+      const occurrenceKey = getOccurrenceKey(job);
+      if (occurrenceKey === undefined) {
+        throw new Error('Expected schedule occurrence metadata');
+      }
+      if (jobs.has(job.id)) {
+        throw new CadenceError({
+          code: 'job.id-conflict',
+          message: `A job with ID ${job.id} already exists`,
+        });
+      }
+      if (occurrences.has(occurrenceKey)) {
+        throw new CadenceError({
+          code: 'schedule.occurrence-conflict',
+          message: 'A job already exists for this schedule occurrence',
+        });
+      }
+
+      const now = readNow();
+      const storedJob = createStoredJob(job, now);
+      const materializedAt = normalizeInstant(job.schedule.occurrenceAt);
+      const normalizedNextRunAt = normalizeInstant(nextRunAt);
+
+      jobs.set(storedJob.id, storedJob);
+      occurrences.add(occurrenceKey);
+      schedule.lastMaterializedAt = materializedAt;
+      schedule.nextRunAt = normalizedNextRunAt;
+      schedule.updatedAt = now;
+      clearScheduleLease(schedule);
+      return true;
+    },
+    releaseScheduleClaim: async ({ id, token }) => {
+      const schedule = schedules.get(id);
+      if (schedule?.leaseToken !== token) {
+        return false;
+      }
+      clearScheduleLease(schedule);
+      return true;
+    },
   };
 }
 
 export const createMemoryDriver: typeof memory = memory;
+
+function getOccurrenceKey(job: NewJob): string | undefined {
+  return job.schedule === undefined
+    ? undefined
+    : `${job.schedule.id}\u0000${job.schedule.occurrenceAt.epochMilliseconds}`;
+}
+
+function createStoredJob(newJob: NewJob, now: Temporal.Instant): StoredJob {
+  return {
+    id: newJob.id,
+    taskName: newJob.taskName,
+    payload: clonePayload(newJob.payload),
+    status: 'pending',
+    attempts: 0,
+    retry: cloneRetry(newJob.retry),
+    createdAt: now,
+    availableAt: normalizeInstant(newJob.availableAt),
+    ...(newJob.schedule === undefined ? {} : { schedule: cloneSchedule(newJob.schedule) }),
+  };
+}
 
 function hasLease(job: StoredJob | undefined, token: string): job is StoredJob {
   return job?.status === 'running' && job.leaseToken === token;
@@ -232,6 +372,47 @@ function cloneJob(job: StoredJob): Job {
     ...(job.lastError === undefined ? {} : { lastError: { ...job.lastError } }),
     ...(job.schedule === undefined ? {} : { schedule: cloneSchedule(job.schedule) }),
   };
+}
+
+function cloneStoredSchedule(schedule: StoredSchedule): Schedule {
+  return {
+    id: schedule.id,
+    taskName: schedule.taskName,
+    payload: clonePayload(schedule.payload),
+    retry: cloneRetry(schedule.retry),
+    trigger: { ...schedule.trigger },
+    createdAt: cloneInstant(schedule.createdAt),
+    updatedAt: cloneInstant(schedule.updatedAt),
+    nextRunAt: cloneInstant(schedule.nextRunAt),
+    ...(schedule.lastMaterializedAt === undefined
+      ? {}
+      : { lastMaterializedAt: cloneInstant(schedule.lastMaterializedAt) }),
+  };
+}
+
+function cloneClaimedSchedule(
+  schedule: StoredSchedule,
+  claimedAt: Temporal.Instant,
+): ClaimedSchedule {
+  if (schedule.leaseToken === undefined || schedule.leaseExpiresAt === undefined) {
+    throw new Error('Cannot clone a schedule without an active lease');
+  }
+  return {
+    ...cloneStoredSchedule(schedule),
+    leaseToken: schedule.leaseToken,
+    leaseExpiresAt: cloneInstant(schedule.leaseExpiresAt),
+    claimedAt: cloneInstant(claimedAt),
+  };
+}
+
+function clearScheduleLease(schedule: StoredSchedule): void {
+  schedule.leaseToken = undefined;
+  schedule.leaseExpiresAt = undefined;
+}
+
+function compareSchedules(left: StoredSchedule, right: StoredSchedule): number {
+  const nextRun = Temporal.Instant.compare(left.nextRunAt, right.nextRunAt);
+  return nextRun === 0 ? left.id.localeCompare(right.id) : nextRun;
 }
 
 function cloneClaimedJob(job: StoredJob): ClaimedJob {
