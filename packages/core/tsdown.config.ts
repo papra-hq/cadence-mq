@@ -11,6 +11,6 @@ export default defineConfig({
     generator: 'oxc',
   },
   deps: {
-    neverBundle: ['vitest'],
+    neverBundle: ['valibot'],
   },
 });
