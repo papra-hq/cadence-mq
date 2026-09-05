@@ -31,3 +31,11 @@ export type Job<Payload extends JsonValue = JsonValue> = {
 export type EnqueueOptions = {
   runAt?: Temporal.InstantLike;
 };
+
+export type PruneJobsOptions = {
+  /** Only terminal jobs finished strictly before this instant are removed. */
+  before: Temporal.InstantLike;
+  statuses?: ReadonlyArray<Extract<JobStatus, 'succeeded' | 'failed'>>;
+  /** Defaults to 1,000 and cannot exceed 10,000. */
+  limit?: number;
+};

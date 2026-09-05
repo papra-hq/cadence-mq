@@ -34,6 +34,7 @@ function createRecordingDriver(): {
         };
       },
       getJob: async () => undefined,
+      pruneJobs: async () => 0,
       claimJobs: async () => [],
       renewJobLeases: async () => [],
       completeJob: async () => false,

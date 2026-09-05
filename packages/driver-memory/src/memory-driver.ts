@@ -76,6 +76,34 @@ export function memory({ clock = systemClock }: MemoryDriverOptions = {}): Drive
       const job = jobs.get(id);
       return job === undefined ? undefined : cloneJob(job);
     },
+    pruneJobs: async ({ before, statuses = ['succeeded', 'failed'], limit = 1_000 }) => {
+      assertPruneLimit(limit);
+      const acceptedStatuses = normalizePruneStatuses(statuses);
+      if (acceptedStatuses.size === 0) {
+        return 0;
+      }
+
+      const cutoff = normalizeInstant(before);
+      const candidates = [...jobs.values()]
+        .filter(
+          (job) =>
+            (job.status === 'succeeded' || job.status === 'failed') &&
+            acceptedStatuses.has(job.status) &&
+            job.finishedAt !== undefined &&
+            Temporal.Instant.compare(job.finishedAt, cutoff) < 0,
+        )
+        .sort(comparePrunableJobs)
+        .slice(0, limit);
+
+      for (const job of candidates) {
+        jobs.delete(job.id);
+        const occurrenceKey = getOccurrenceKey(job);
+        if (occurrenceKey !== undefined) {
+          occurrences.delete(occurrenceKey);
+        }
+      }
+      return candidates.length;
+    },
     claimJobs: async ({ taskNames, limit, leaseDurationMs }) => {
       assertNonNegativeInteger(limit, 'limit');
       assertNonNegativeInteger(leaseDurationMs, 'leaseDurationMs');
@@ -357,6 +385,15 @@ function compareJobs(left: StoredJob, right: StoredJob): number {
   return creation === 0 ? left.id.localeCompare(right.id) : creation;
 }
 
+function comparePrunableJobs(left: StoredJob, right: StoredJob): number {
+  if (left.finishedAt === undefined || right.finishedAt === undefined) {
+    throw new Error('Cannot compare jobs without a finish time');
+  }
+
+  const finished = Temporal.Instant.compare(left.finishedAt, right.finishedAt);
+  return finished === 0 ? left.id.localeCompare(right.id) : finished;
+}
+
 function cloneJob(job: StoredJob): Job {
   return {
     id: job.id,
@@ -455,6 +492,27 @@ function cloneInstant(instant: Temporal.Instant): Temporal.Instant {
 
 function normalizeInstant(instant: Temporal.InstantLike): Temporal.Instant {
   return cloneInstant(Temporal.Instant.from(instant));
+}
+
+function normalizePruneStatuses(
+  statuses: ReadonlyArray<'succeeded' | 'failed'>,
+): ReadonlySet<'succeeded' | 'failed'> {
+  if (statuses.some((status) => status !== 'succeeded' && status !== 'failed')) {
+    throw new CadenceError({
+      code: 'driver.invalid-options',
+      message: 'statuses may only contain succeeded and failed',
+    });
+  }
+  return new Set(statuses);
+}
+
+function assertPruneLimit(limit: number): void {
+  if (!Number.isSafeInteger(limit) || limit < 1 || limit > 10_000) {
+    throw new CadenceError({
+      code: 'driver.invalid-options',
+      message: 'limit must be an integer between 1 and 10,000',
+    });
+  }
 }
 
 function assertNonNegativeInteger(value: number, field: string): void {

@@ -19,6 +19,7 @@ function recordingDriver() {
       throw new Error('not implemented');
     },
     getJob: async () => undefined,
+    pruneJobs: async () => 0,
     claimJobs: async () => [],
     renewJobLeases: async () => [],
     completeJob: async () => false,
