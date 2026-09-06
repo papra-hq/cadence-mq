@@ -202,10 +202,10 @@ export function registerSchedulesTestSuite({
       }
     });
 
-    test(
-      'a worker materializes only the latest missed schedule occurrence',
+    test.each([0, 3, 86_400])(
+      'a worker materializes the persisted occurrence and skips a %i-second backlog',
       testOptions,
-      async () => {
+      async (overdueSeconds) => {
         const backingDriver = await createDriver();
         let claimedAt: Temporal.Instant | undefined;
         const observedDriver: Driver = {
@@ -226,13 +226,13 @@ export function registerSchedulesTestSuite({
         try {
           await backingDriver.initialize();
           const now = await backingDriver.now();
-          const latestBoundary = Temporal.Instant.fromEpochMilliseconds(
+          const occurrenceAt = Temporal.Instant.fromEpochMilliseconds(
             Math.floor(now.epochMilliseconds / 1_000) * 1_000,
-          );
+          ).subtract({ seconds: overdueSeconds });
           await backingDriver.upsertSchedule(
             await scheduleUpsert(backingDriver, {
               trigger: { cron: '* * * * * *', timeZone: 'UTC' },
-              nextRunAt: latestBoundary.subtract({ seconds: 3 }),
+              nextRunAt: occurrenceAt,
             }),
           );
           await worker.start();
@@ -243,21 +243,21 @@ export function registerSchedulesTestSuite({
           if (claimedAt === undefined) {
             throw new Error('Expected an observed schedule claim');
           }
-          const latestOccurrence = Temporal.Instant.fromEpochMilliseconds(
-            Math.floor(claimedAt.epochMilliseconds / 1_000) * 1_000,
+          const nextRunAt = Temporal.Instant.fromEpochMilliseconds(
+            (Math.floor(claimedAt.epochMilliseconds / 1_000) + 1) * 1_000,
           );
-          const [job] = await backingDriver.claimJobs({
+          const jobs = await backingDriver.claimJobs({
             taskNames: [testScheduleTaskName],
-            limit: 1,
+            limit: 10,
             leaseDurationMs: 30_000,
           });
 
-          expect(job?.schedule?.occurrenceAt.equals(latestOccurrence)).toBe(true);
-          expect(
-            (await backingDriver.getSchedule(testScheduleId))?.nextRunAt.equals(
-              latestOccurrence.add({ seconds: 1 }),
-            ),
-          ).toBe(true);
+          expect(jobs).toHaveLength(1);
+          expect(jobs[0]?.schedule?.occurrenceAt.equals(occurrenceAt)).toBe(true);
+          expect(jobs[0]?.availableAt.equals(occurrenceAt)).toBe(true);
+          const schedule = await backingDriver.getSchedule(testScheduleId);
+          expect(schedule?.lastMaterializedAt?.equals(occurrenceAt)).toBe(true);
+          expect(schedule?.nextRunAt.equals(nextRunAt)).toBe(true);
         } finally {
           await cadence.close({ gracePeriodMs: 0 });
         }

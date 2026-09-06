@@ -30,6 +30,13 @@ await worker.start();
 await cadence.close();
 ```
 
+## Overdue schedules
+
+When a schedule is overdue, the worker creates one job for its persisted `nextRunAt` and
+atomically advances the cursor to the first cron occurrence strictly after the driver's claim
+time. Intervening missed ticks are skipped, not replayed or searched for the latest occurrence.
+Scheduling work does not grow with the number of missed ticks.
+
 ## Testing a driver
 
 Driver implementations can run the shared high-level behavioral suite from the dedicated test

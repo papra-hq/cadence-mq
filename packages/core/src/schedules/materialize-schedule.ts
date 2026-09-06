@@ -4,7 +4,7 @@ import { getNextExecutionDate } from '../cron/cron';
 import { cloneJsonValue } from '../shared/json';
 import { cloneRetryPolicy } from '../shared/retry';
 
-/** Materializes the latest due occurrence and atomically advances its durable cursor. */
+/** Materializes the persisted due occurrence and skips missed ticks when advancing its cursor. */
 export async function materializeSchedule(
   driver: Driver,
   schedule: ClaimedSchedule,
@@ -12,13 +12,12 @@ export async function materializeSchedule(
   const lease = { id: schedule.id, token: schedule.leaseToken };
 
   try {
-    let occurrenceAt = schedule.nextRunAt;
-    let nextRunAt = next(schedule, occurrenceAt);
-
-    while (Temporal.Instant.compare(nextRunAt, schedule.claimedAt) <= 0) {
-      occurrenceAt = nextRunAt;
-      nextRunAt = next(schedule, occurrenceAt);
-    }
+    const occurrenceAt = schedule.nextRunAt;
+    const nextRunAt = getNextExecutionDate(schedule.trigger.cron, {
+      after: schedule.claimedAt,
+      timeZone: schedule.trigger.timeZone,
+      hashSeed: schedule.id,
+    });
 
     const job: NewJob = {
       id: randomUUID(),
@@ -38,12 +37,4 @@ export async function materializeSchedule(
     }
     throw error;
   }
-}
-
-function next(schedule: ClaimedSchedule, after: Temporal.Instant): Temporal.Instant {
-  return getNextExecutionDate(schedule.trigger.cron, {
-    after,
-    timeZone: schedule.trigger.timeZone,
-    hashSeed: schedule.id,
-  });
 }

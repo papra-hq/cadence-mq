@@ -283,6 +283,58 @@ describe('memory driver', () => {
     });
   });
 
+  test('an overdue schedule skips a day of ticks and resumes at the next future boundary', async () => {
+    const clock = createControlledClock({ now: start });
+    const driver = memory({ clock });
+    const cadence = createCadence({ driver });
+    const task = defineTask({ name: 'schedule.every-second', schema: v.null() });
+    const schedule = await cadence.schedules.upsert({
+      id: 'every-second',
+      task,
+      payload: null,
+      trigger: { cron: '* * * * * *' },
+    });
+    clock.advanceBy({ hours: 24, milliseconds: 500 });
+    const nextRunAt = start.add({ hours: 24, seconds: 1 });
+    const worker = cadence.createWorker({
+      handlers: [],
+      scheduler: clock,
+      pollingIntervalMs: 100,
+    });
+    const claimJobs = async () =>
+      driver.claimJobs({ taskNames: [task.name], limit: 10, leaseDurationMs: 30_000 });
+    const claimSchedules = async () =>
+      driver.claimDueSchedules({ limit: 1, leaseDurationMs: 30_000 });
+
+    try {
+      await worker.start();
+      await new Promise<void>((resolve) => setImmediate(resolve));
+
+      const overdueJobs = await claimJobs();
+      expect(overdueJobs).toHaveLength(1);
+      expect(overdueJobs[0]?.schedule?.occurrenceAt.equals(schedule.nextRunAt)).toBe(true);
+      expect((await cadence.schedules.get(schedule.id))?.nextRunAt.equals(nextRunAt)).toBe(true);
+      expect(await claimSchedules()).toEqual([]);
+
+      clock.advanceBy({ milliseconds: 400 });
+      await new Promise<void>((resolve) => setImmediate(resolve));
+      expect(await claimJobs()).toEqual([]);
+      expect(await claimSchedules()).toEqual([]);
+
+      clock.advanceBy({ milliseconds: 100 });
+      await new Promise<void>((resolve) => setImmediate(resolve));
+      const futureJobs = await claimJobs();
+      expect(futureJobs).toHaveLength(1);
+      expect(futureJobs[0]?.schedule?.occurrenceAt.equals(nextRunAt)).toBe(true);
+      expect(
+        (await cadence.schedules.get(schedule.id))?.nextRunAt.equals(nextRunAt.add({ seconds: 1 })),
+      ).toBe(true);
+      expect(await claimSchedules()).toEqual([]);
+    } finally {
+      await cadence.close({ gracePeriodMs: 0 });
+    }
+  });
+
   test('closing the driver repeatedly is safe', async () => {
     const driver = memory();
 
