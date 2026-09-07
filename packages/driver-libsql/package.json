@@ -1,6 +1,6 @@
 {
   "name": "@cadence-mq/driver-libsql",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "LibSQL driver for CadenceMQ",
   "keywords": [
     "cadence",
