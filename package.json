@@ -1,6 +1,6 @@
 {
   "name": "@cadence-mq/root",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "private": true,
   "license": "MIT",
   "type": "module",

@@ -1,6 +1,6 @@
 {
   "name": "@cadence-mq/driver-memory",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "description": "In-memory driver for CadenceMQ",
   "keywords": [
     "cadence",

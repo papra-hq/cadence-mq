@@ -1,6 +1,6 @@
 {
   "name": "@cadence-mq/core",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "description": "Modern, type-safe, and performant task queue for Node.js",
   "keywords": [
     "cadence",
