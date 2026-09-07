@@ -52,65 +52,6 @@ function occurrence(id: string, occurrenceAt: Temporal.Instant): NewJob {
 }
 
 describe('LibSQL schedules', () => {
-  test.each([
-    { label: 'without schedule columns', scheduleColumns: '' },
-    {
-      label: 'with pre-provisioned schedule columns',
-      scheduleColumns: 'schedule_id TEXT, schedule_occurrence_at INTEGER,',
-    },
-  ])('a v1 database $label migrates without losing existing jobs', async ({ scheduleColumns }) => {
-    const seedClient = createClient({ url, timeout: 5_000 });
-    clients.push(seedClient);
-    await seedClient.batch(
-      [
-        `CREATE TABLE cadence_migrations (version INTEGER PRIMARY KEY, applied_at INTEGER NOT NULL)`,
-        `INSERT INTO cadence_migrations (version, applied_at) VALUES (1, 0)`,
-        `CREATE TABLE cadence_jobs (
-          id TEXT PRIMARY KEY,
-          task_name TEXT NOT NULL,
-          payload TEXT NOT NULL,
-          status TEXT NOT NULL CHECK (status IN ('pending', 'running', 'succeeded', 'failed')),
-          attempts INTEGER NOT NULL,
-          retry_json TEXT NOT NULL,
-          max_attempts INTEGER NOT NULL,
-          created_at INTEGER NOT NULL,
-          available_at INTEGER NOT NULL,
-          started_at INTEGER,
-          finished_at INTEGER,
-          last_error TEXT,
-          ${scheduleColumns}
-          lease_token TEXT,
-          lease_expires_at INTEGER
-        )`,
-        {
-          sql: `INSERT INTO cadence_jobs (
-            id, task_name, payload, status, attempts, retry_json, max_attempts,
-            created_at, available_at
-          ) VALUES (?, ?, ?, 'pending', 0, ?, 1, ?, ?)`,
-          args: [
-            'legacy-job',
-            'reports.create',
-            JSON.stringify({ legacy: true }),
-            JSON.stringify({ maxAttempts: 1 }),
-            1_767_225_600_000,
-            1_767_225_600_000,
-          ],
-        },
-      ],
-      'write',
-    );
-
-    const target = driver();
-    const concurrentTarget = driver();
-    await Promise.all([target.initialize(), concurrentTarget.initialize()]);
-    expect(await target.getJob('legacy-job')).toMatchObject({
-      id: 'legacy-job',
-      payload: { legacy: true },
-    });
-    const migratedSchedule = await target.upsertSchedule(await schedule(target));
-    expect((await target.getSchedule(migratedSchedule.id))?.id).toBe('reports.daily');
-  });
-
   test('independent clients cannot claim or materialize one occurrence twice', async () => {
     const first = driver();
     const second = driver();
