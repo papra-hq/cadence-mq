@@ -1,0 +1,75 @@
+name: Release
+
+on:
+  release:
+    types:
+      - published
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    name: Publish packages
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate release version
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          node --input-type=module <<'EOF'
+          import { readFile, readdir } from 'node:fs/promises';
+
+          const tag = process.env.RELEASE_TAG;
+          const version = tag?.startsWith('v') ? tag.slice(1) : undefined;
+
+          if (!version) {
+            throw new Error(`Release tag must use the v<version> format, received: ${tag}`);
+          }
+
+          const entries = await readdir('packages', { withFileTypes: true });
+          const packageDirectories = entries.filter((entry) => entry.isDirectory());
+
+          for (const directory of packageDirectories) {
+            const manifestPath = `packages/${directory.name}/package.json`;
+            const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+
+            if (!manifest.private && manifest.version !== version) {
+              throw new Error(
+                `${manifest.name} has version ${manifest.version}, expected ${version} from tag ${tag}`,
+              );
+            }
+          }
+          EOF
+
+      - name: Run quality checks
+        run: pnpm check
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Build packages
+        run: pnpm build:packages
+
+      - name: Publish packages
+        run: pnpm -r --filter './packages/*' publish --access public --provenance --no-git-checks

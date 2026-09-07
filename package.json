@@ -10,10 +10,12 @@
     "test": "vitest run",
     "test:watch": "vitest watch",
     "check": "oxlint && oxfmt --check",
-    "check:fix": "oxlint --fix && oxfmt"
+    "check:fix": "oxlint --fix && oxfmt",
+    "release": "bumpp --commit --tag --push"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^5.0.0",
+    "bumpp": "^12.3.0",
     "oxfmt": "^0.66.0",
     "oxlint": "^1.81.0",
     "oxlint-tsgolint": "^7.0.2001",
