@@ -11,7 +11,7 @@
     "test:watch": "vitest watch",
     "check": "oxlint && oxfmt --check",
     "check:fix": "oxlint --fix && oxfmt",
-    "release": "bumpp --commit --tag --push"
+    "release": "bumpp --recursive --commit --tag --push"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^5.0.0",
